@@ -1,0 +1,44 @@
+<!-- Content Area Preloader -->
+<div
+  id="preloader"
+  class="absolute inset-0 z-[50] flex items-center justify-center bg-white/70 backdrop-blur-[5px] transition-opacity duration-300"
+>
+  <div class="flex flex-col items-center gap-2">
+    <!-- Minimal Spinner -->
+    <div class="relative w-10 h-10">
+      <div class="absolute inset-0 border-2 border-slate-100 rounded-full"></div>
+      <div
+        class="absolute inset-0 border-2 border-blue-600 rounded-full border-t-transparent animate-spin"
+      ></div>
+    </div>
+    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Loading...</span>
+  </div>
+</div>
+
+<style>
+  #preloader.fade-out {
+    opacity: 0;
+    pointer-events: none;
+  }
+</style>
+
+<script>
+  window.addEventListener('load', () => {
+    const preloader = document.getElementById('preloader');
+    if (preloader) {
+      setTimeout(() => {
+        preloader.classList.add('fade-out');
+        setTimeout(() => preloader.remove(), 300);
+      }, 400);
+    }
+  });
+
+  // Fallback
+  setTimeout(() => {
+    const preloader = document.getElementById('preloader');
+    if (preloader) {
+      preloader.classList.add('fade-out');
+      setTimeout(() => preloader.remove(), 300);
+    }
+  }, 3000);
+</script>

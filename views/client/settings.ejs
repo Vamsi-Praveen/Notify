@@ -1,0 +1,376 @@
+<div class="max-w-4xl space-y-8">
+  <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+      <div>
+        <h3 class="text-xs font-bold text-slate-800 uppercase tracking-widest">
+          Allowed Origins (CORS)
+        </h3>
+        <p class="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">
+          Manage domains allowed to make cross-origin requests to your notification API.
+        </p>
+      </div>
+    </div>
+
+    <div class="p-6 space-y-6">
+      <!-- Add New Origin Form -->
+      <form id="addOriginForm" class="flex gap-3">
+        <div class="flex-1">
+          <input
+            type="text"
+            id="newOrigin"
+            placeholder="https://example.com"
+            class="w-full px-3 py-2 text-xs border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            required
+          />
+        </div>
+        <button
+          type="submit"
+          class="px-4 py-2 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest rounded hover:bg-blue-700 transition-colors shadow-sm inline-flex items-center gap-2"
+        >
+          <i data-lucide="plus" class="w-3 h-3"></i>
+          Add Origin
+        </button>
+      </form>
+
+      <!-- List of Origins -->
+      <div class="border border-slate-100 rounded-lg overflow-hidden">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50/50 border-b border-slate-100">
+            <tr>
+              <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                Origin URL
+              </th>
+              <th
+                class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right"
+              >
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody id="originsList" class="divide-y divide-slate-100">
+            <% if (allowedOrigins && allowedOrigins.length > 0) { %> <%
+            allowedOrigins.forEach(origin => { %>
+            <tr class="hover:bg-slate-50/50 transition-colors">
+              <td class="px-6 py-4">
+                <code class="text-xs font-mono text-slate-700"><%= origin %></code>
+              </td>
+              <td class="px-6 py-4 text-right">
+                <button
+                  onclick="removeOrigin('<%= origin %>', this)"
+                  class="text-red-500 hover:text-red-700 transition-colors"
+                  title="Remove Origin"
+                >
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </td>
+            </tr>
+            <% }) %> <% } else { %>
+            <tr>
+              <td colspan="2" class="px-6 py-10 text-center text-slate-400 text-xs">
+                No origins configured. All origins will be blocked by default.
+              </td>
+            </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+        <h4
+          class="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2 flex items-center gap-2"
+        >
+          <i data-lucide="info" class="w-3 h-3"></i>
+          Important Note
+        </h4>
+        <p class="text-[10px] text-slate-500 leading-relaxed">
+          - Use <code>*</code> for testing only (Not recommended for production).<br />
+          - Support wildcard subdomains: <code>*.example.com</code>.<br />
+          - Ensure protocols are included (e.g., <code>https://</code>).
+        </p>
+      </div>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-4xl mt-4 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+      <div>
+        <h3 class="text-xs font-bold text-slate-800 uppercase tracking-widest">
+          IP Security (Allowlist)
+        </h3>
+        <p class="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">
+          Restrict API access to specific IP addresses. If empty, all IPs are allowed.
+        </p>
+      </div>
+    </div>
+
+    <div class="p-6 space-y-6">
+      <!-- Add New IP Form -->
+      <form id="addIpForm" class="flex gap-3">
+        <div class="flex-1">
+          <input
+            type="text"
+            id="newIp"
+            placeholder="192.168.1.5"
+            class="w-full px-3 py-2 text-xs border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            required
+          />
+        </div>
+        <button
+          type="submit"
+          class="px-4 py-2 bg-slate-800 text-white text-[10px] font-bold uppercase tracking-widest rounded hover:bg-slate-900 transition-colors shadow-sm inline-flex items-center gap-2"
+        >
+          <i data-lucide="plus" class="w-3 h-3"></i>
+          Add IP
+        </button>
+      </form>
+
+      <!-- List of IPs -->
+      <div class="border border-slate-100 rounded-lg overflow-hidden">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50/50 border-b border-slate-100">
+            <tr>
+              <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                IP Address
+              </th>
+              <th
+                class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right"
+              >
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody id="ipsList" class="divide-y divide-slate-100">
+            <% if (allowedIps && allowedIps.length > 0) { %> <%
+            allowedIps.forEach(ip => { %>
+            <tr class="hover:bg-slate-50/50 transition-colors">
+              <td class="px-6 py-4">
+                <code class="text-xs font-mono text-slate-700"><%= ip %></code>
+              </td>
+              <td class="px-6 py-4 text-right">
+                <button
+                  onclick="removeIp('<%= ip %>', this)"
+                  class="text-red-500 hover:text-red-700 transition-colors"
+                  title="Remove IP"
+                >
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </td>
+            </tr>
+            <% }) %> <% } else { %>
+            <tr>
+              <td colspan="2" class="px-6 py-10 text-center text-slate-400 text-xs">
+                No IP restrictions configured. All IPs are allowed.
+              </td>
+            </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+  </div>
+
+  <div class="max-w-4xl mt-4 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+      <div>
+        <h3 class="text-xs font-bold text-slate-800 uppercase tracking-widest">
+          Security Settings
+        </h3>
+        <p class="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">
+          Update your account password.
+        </p>
+      </div>
+    </div>
+    <div class="p-6">
+        <form id="changePasswordForm" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Current Password</label>
+                    <input type="password" id="currentPassword" class="w-full px-3 py-2 text-xs border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500" placeholder="••••••••" required>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">New Password</label>
+                    <input type="password" id="newPassword" class="w-full px-3 py-2 text-xs border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500" placeholder="••••••••" required>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Confirm Password</label>
+                    <input type="password" id="confirmPassword" class="w-full px-3 py-2 text-xs border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500" placeholder="••••••••" required>
+                </div>
+            </div>
+            <div class="flex justify-end">
+                <button type="submit" class="px-4 py-2 bg-slate-800 text-white text-[10px] font-bold uppercase tracking-widest rounded hover:bg-slate-900 transition-colors shadow-sm">
+                    Update Password
+                </button>
+            </div>
+        </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  lucide.createIcons();
+
+  const addOriginForm = document.getElementById('addOriginForm');
+  const newOriginInput = document.getElementById('newOrigin');
+
+  addOriginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    toggleLoading(submitBtn, true, 'Adding...');
+    const origin = newOriginInput.value.trim();
+    if (!origin) {
+        toggleLoading(submitBtn, false);
+        return;
+    }
+
+    try {
+      const response = await fetch('/tenant-api/settings/allowed-origins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ origin }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        await window.showAlert('Origin added successfully', 'success');
+        location.reload();
+      } else {
+        window.showAlert(result.message || 'Failed to add origin', 'error');
+        toggleLoading(submitBtn, false);
+      }
+    } catch (err) {
+      window.showAlert('An error occurred', 'error');
+      toggleLoading(submitBtn, false);
+    }
+  });
+
+  async function removeOrigin(origin, btn) {
+    const confirmed = await window.showConfirm(`Are you sure you want to remove ${origin}?`);
+    if (!confirmed) return;
+    if(btn) toggleLoading(btn, true, '');
+
+    try {
+      const response = await fetch('/tenant-api/settings/allowed-origins', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ origin }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        await window.showAlert('Origin removed successfully', 'success');
+        location.reload();
+      } else {
+        window.showAlert(result.message || 'Failed to remove origin', 'error');
+        if(btn) toggleLoading(btn, false);
+      }
+    } catch (err) {
+      window.showAlert('An error occurred', 'error');
+      if(btn) toggleLoading(btn, false);
+    }
+  }
+
+  // IP Allowlist Logic
+  const addIpForm = document.getElementById('addIpForm');
+  const newIpInput = document.getElementById('newIp');
+
+  if (addIpForm) {
+    addIpForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      toggleLoading(submitBtn, true, 'Adding...');
+      const ip = newIpInput.value.trim();
+      if (!ip) {
+          toggleLoading(submitBtn, false);
+          return;
+      }
+
+      try {
+        const response = await fetch('/tenant-api/settings/allowed-ips', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ip }),
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          await window.showAlert('IP added successfully', 'success');
+          location.reload();
+        } else {
+          window.showAlert(result.message || 'Failed to add IP', 'error');
+          toggleLoading(submitBtn, false);
+        }
+      } catch (err) {
+        window.showAlert('An error occurred', 'error');
+        toggleLoading(submitBtn, false);
+      }
+    });
+  }
+
+  async function removeIp(ip, btn) {
+    const confirmed = await window.showConfirm(`Are you sure you want to remove ${ip}?`);
+    if (!confirmed) return;
+    if(btn) toggleLoading(btn, true, '');
+
+    try {
+      const response = await fetch('/tenant-api/settings/allowed-ips', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ip }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        await window.showAlert('IP removed successfully', 'success');
+        location.reload();
+      } else {
+        window.showAlert(result.message || 'Failed to remove IP', 'error');
+        if(btn) toggleLoading(btn, false);
+      }
+    } catch (err) {
+      window.showAlert('An error occurred', 'error');
+      if(btn) toggleLoading(btn, false);
+    }
+  }
+
+
+  const changePasswordForm = document.getElementById('changePasswordForm');
+  if (changePasswordForm) {
+    changePasswordForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        toggleLoading(submitBtn, true, 'Updating...');
+        
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (newPassword !== confirmPassword) {
+            toggleLoading(submitBtn, false);
+            return window.showAlert('New passwords do not match', 'error');
+        }
+
+        try {
+            const res = await fetch('/tenant-api/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
+            });
+
+            const result = await res.json();
+            if (result.success) {
+                window.showAlert(result.message, 'success');
+                changePasswordForm.reset();
+            } else {
+                window.showAlert(result.message, 'error');
+            }
+        } catch (err) {
+            window.showAlert('Error updating password', 'error');
+        } finally {
+            toggleLoading(submitBtn, false);
+        }
+    });
+  }

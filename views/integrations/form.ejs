@@ -1,0 +1,182 @@
+<div class="max-w-4xl space-y-8">
+    <div class="pb-6 border-b border-slate-100 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <a href="/admin/integrations" class="p-2 border border-slate-200 rounded text-slate-400 hover:text-slate-600 hover:border-slate-300 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            </a>
+            <div>
+                <h2 class="text-lg font-bold text-slate-800 tracking-tight"><%= integration._id ? 'Edit Gateway' : 'New Gateway Provision' %></h2>
+                <p class="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-bold">Delivery Connectivity Node</p>
+            </div>
+        </div>
+    </div>
+
+    <form id="integrationForm" class="space-y-8">
+        <input type="hidden" name="id" value="<%= integration._id %>" />
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="space-y-6">
+                <!-- Basic Info -->
+                <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-4">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Internal Alias</label>
+                        <input type="text" name="name" required placeholder="AWS_SES_PRIMARY"
+                            value="<%= integration.name || '' %>"
+                            class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-semibold">
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Protocol Type</label>
+                        <select name="type" required onchange="handleTypeChange(this.value)"
+                            class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs bg-white font-semibold">
+                            <% ['email', 'slack', 'telegram', 'sms', 'push', 'webhook', 'teams'].forEach(type => { %>
+                            <option value="<%= type %>" <%= integration.type === type ? 'selected' : '' %>><%= type.toUpperCase() %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Environment Owner</label>
+                        <select name="tenantId" required
+                            class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs bg-white font-semibold text-slate-500">
+                            <% tenants.forEach(tenant => { %>
+                            <option value="<%= tenant._id %>" <%= String(integration.tenantId) === String(tenant._id) ? 'selected' : '' %>>
+                                <%= tenant.name %>
+                            </option>
+                            <% }) %>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center gap-3 pt-2">
+                        <label class="flex items-center gap-2 cursor-pointer group">
+                            <input type="checkbox" name="active" id="active" value="true" <%= integration.active !== false ? 'checked' : '' %>
+                                class="w-4 h-4 rounded text-blue-600 border-slate-300">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-slate-800 transition-colors">Gateway Operational</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Credentials Section (Dynamic) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-lg p-6 shadow-xl space-y-6">
+                <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="key-round" class="w-3.5 h-3.5 text-blue-400"></i>
+                    <h3 class="text-[10px] font-bold text-white uppercase tracking-widest">Secure Credentials</h3>
+                </div>
+                <div id="credentialFields" class="space-y-4">
+                    <!-- Fields will be injected by JS -->
+                </div>
+                <p class="text-[9px] text-slate-500 font-medium uppercase tracking-tighter border-t border-slate-800 pt-4 leading-relaxed">
+                    Credentials are encrypted in transit and at rest using service providers' recommended standards.
+                </p>
+            </div>
+        </div>
+
+        <div class="pt-8 flex items-center justify-end gap-3 border-t border-slate-100">
+            <a href="/admin/integrations" class="px-6 py-2.5 text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors">Abort Configuration</a>
+            <button type="submit" class="px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold uppercase tracking-widest rounded shadow-sm transition-all transform active:scale-95">
+                <%= integration._id ? 'Synchronize Gateway' : 'Initialize Provision' %>
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    const types = {
+        email: [
+            { key: 'host', label: 'SMTP Node', placeholder: 'smtp.provider.mesh' },
+            { key: 'port', label: 'Listen Port', placeholder: '587' },
+            { key: 'user', label: 'Auth Identifier', placeholder: 'svc_user_001' },
+            { key: 'pass', label: 'Secret Token', type: 'password' },
+            { key: 'from', label: 'Verified Header (From)', placeholder: 'no-reply@mesh.internal' },
+        ],
+        slack: [
+            { key: 'webhookUrl', label: 'Inbound Webhook URI', placeholder: 'https://hooks.slack.com/...' },
+        ],
+        telegram: [
+            { key: 'botToken', label: 'Bot Lifecycle Token', placeholder: '123456:ABC-DEF...' },
+        ],
+        sms: [
+            { key: 'accountSid', label: 'Provider Account ID (SID)' },
+            { key: 'authToken', label: 'Provider Master Token', type: 'password' },
+            { key: 'from', label: 'Originating Number' },
+        ],
+        push: [
+            { key: 'serverKey', label: 'Cluster Messaging Key', placeholder: 'fcm_key_...' },
+        ],
+        webhook: [
+            { key: 'url', label: 'Egress Endpoint', placeholder: 'https://external.mesh/callback' },
+            { key: 'secret', label: 'Hmac Signing Secret' }
+        ],
+        teams: [
+            { key: 'webhookUrl', label: 'Teams Incoming URI' }
+        ]
+    };
+
+    const initialCredentials = <%- JSON.stringify(integration.credentials || {}) %>;
+
+    function handleTypeChange(type) {
+        const fields = types[type] || [];
+        const container = document.getElementById('credentialFields');
+        container.innerHTML = fields.map(field => `
+            <div class="space-y-2">
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${field.label}</label>
+                <input 
+                    type="${field.type || 'text'}" 
+                    name="credentials.${field.key}" 
+                    value="${initialCredentials[field.key] || ''}"
+                    placeholder="${field.placeholder || ''}"
+                    required
+                    class="w-full px-3 py-2 rounded bg-slate-800 border border-slate-700 focus:border-blue-600 outline-none text-xs font-mono text-white placeholder:text-slate-600">
+            </div>
+        `).join('');
+        lucide.createIcons();
+    }
+
+    handleTypeChange('<%= integration.type || "email" %>');
+
+    document.getElementById('integrationForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        toggleLoading(submitBtn, true, 'Provisioning...');
+
+        const formData = new FormData(e.target);
+        const data = {
+            name: formData.get('name'),
+            type: formData.get('type'),
+            tenantId: formData.get('tenantId'),
+            active: formData.get('active') === 'true',
+            credentials: {}
+        };
+
+        for (let [key, value] of formData.entries()) {
+            if (key.startsWith('credentials.')) {
+                const credKey = key.split('.')[1];
+                data.credentials[credKey] = value;
+            }
+        }
+
+        const id = formData.get('id');
+        const method = id !== 'undefined' && id ? 'PUT' : 'POST';
+        const url = id !== 'undefined' && id ? `/admin/admin-api/integrations/${id}` : '/admin/admin-api/integrations';
+
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                window.location.href = '/admin/integrations';
+            } else {
+                const err = await res.json();
+                showAlert(err.message || 'Provisioning validation failure');
+                toggleLoading(submitBtn, false);
+            }
+        } catch (e) {
+            showAlert('Gateway communication error');
+            toggleLoading(submitBtn, false);
+        }
+    });
+    lucide.createIcons();
+</script>

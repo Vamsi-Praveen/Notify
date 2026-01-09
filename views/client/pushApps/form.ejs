@@ -1,0 +1,243 @@
+<div class="flex justify-center">
+  <div class="w-full max-w-3xl">
+    <!-- Header -->
+    <div class="mb-8 flex items-center justify-between">
+      <div>
+        <h2 class="text-2xl font-bold text-slate-800"><%= app._id ? 'Edit App' : 'New App' %></h2>
+        <p class="text-sm text-slate-500 mt-1">Configure your mobile application details.</p>
+      </div>
+      <a
+        href="/tenant/push-apps"
+        class="text-xs font-bold text-slate-500 hover:text-slate-800 uppercase tracking-widest flex items-center gap-2"
+      >
+        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+        Back
+      </a>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+      <form id="appForm" class="p-6 space-y-6">
+        <% if (app._id) { %>
+        <input type="hidden" name="id" value="<%= app._id %>" />
+        <% } %>
+
+        <div class="grid grid-cols-2 gap-6">
+          <!-- App Name -->
+          <div class="col-span-2 sm:col-span-1">
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-2">
+              App Name <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="name"
+              value="<%= app.name || '' %>"
+              required
+              placeholder="e.g. Rider App"
+              class="w-full px-3 py-2 text-sm border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            />
+          </div>
+
+          <!-- App ID -->
+          <div class="col-span-2 sm:col-span-1">
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-2">
+              Bundle ID / Package Name <span class="text-red-500">*</span>
+            </label>
+            <input type="text" name="appId" value="<%= app.appId || '' %>" required <%= app._id ?
+            'readonly' : '' %> placeholder="com.example.app" class="w-full px-3 py-2 text-sm border
+            border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500
+            focus:border-blue-500 transition-colors <%= app._id ? 'bg-slate-50 text-slate-500' : ''
+            %>" /> <% if (app._id) { %>
+            <p class="text-[10px] text-slate-400 mt-1">App ID cannot be changed after creation.</p>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Platform -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-3">
+            Target Platform
+          </label>
+          <div class="flex gap-4">
+            <label
+              class="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded cursor-pointer hover:bg-slate-50 input-active-state"
+            >
+              <input type="radio" name="platform" value="both" <%= (!app.platform || app.platform
+              === 'both') ? 'checked' : '' %> class="text-blue-600 focus:ring-blue-500">
+              <span class="text-sm font-medium text-slate-700">Both (Android & iOS)</span>
+            </label>
+            <label
+              class="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded cursor-pointer hover:bg-slate-50 input-active-state"
+            >
+              <input type="radio" name="platform" value="android" <%= app.platform === 'android' ?
+              'checked' : '' %> class="text-blue-600 focus:ring-blue-500">
+              <span class="text-sm font-medium text-slate-700">Android Only</span>
+            </label>
+            <label
+              class="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded cursor-pointer hover:bg-slate-50 input-active-state"
+            >
+              <input type="radio" name="platform" value="ios" <%= app.platform === 'ios' ? 'checked'
+              : '' %> class="text-blue-600 focus:ring-blue-500">
+              <span class="text-sm font-medium text-slate-700">iOS Only</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Firebase Config -->
+        <div class="pt-6 border-t border-slate-100">
+          <h3
+            class="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 flex items-center gap-2"
+          >
+            <i data-lucide="flame" class="w-4 h-4 text-orange-500"></i>
+            Firebase Credentials
+          </h3>
+
+          <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-4">
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Upload or paste the content of your Firebase Service Account JSON file. You can
+              generate this in the Firebase Console under
+              <strong>Project Settings > Service accounts > Generate new private key</strong>.
+            </p>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-2">
+                Service Account JSON <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <textarea
+                  name="serviceAccountJson"
+                  rows="8"
+                  class="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  placeholder='{
+  "type": "service_account",
+  "project_id": "...",
+  "private_key_id": "...",
+  "private_key": "-----BEGIN PRIVATE KEY-----\n...",
+  "client_email": "...",
+  ...
+}'
+                >
+<%= app._id ? '' : '' %></textarea
+                >
+                <% if (app._id) { %>
+                <div class="absolute top-2 right-2">
+                  <span
+                    class="inline-flex items-center px-2 py-1 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100"
+                  >
+                    Credentials Configured
+                  </span>
+                </div>
+                <% } %>
+              </div>
+              <% if (app._id) { %>
+              <p class="text-[10px] text-slate-400 mt-1">
+                Leave blank to keep existing credentials. Paste new JSON to update.
+              </p>
+              <% } %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Status -->
+        <div class="flex items-center gap-3 pt-4 border-t border-slate-100">
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" name="isActive" class="sr-only peer" <%= (!app._id ||
+            app.isActive) ? 'checked' : '' %>>
+            <div
+              class="w-9 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"
+            ></div>
+            <span class="ml-3 text-sm font-medium text-slate-700">Active</span>
+          </label>
+        </div>
+
+        <!-- Submit -->
+        <div class="pt-6 border-t border-slate-100 flex items-center justify-end gap-3">
+          <a
+            href="/tenant/push-apps"
+            class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 uppercase tracking-widest transition-colors"
+          >
+            Cancel
+          </a>
+          <button
+            type="submit"
+            class="px-6 py-2 bg-blue-600 text-white text-xs font-bold uppercase tracking-widest rounded hover:bg-blue-700 transition-colors shadow-sm inline-flex items-center gap-2"
+          >
+            <i data-lucide="save" class="w-4 h-4"></i>
+            <%= app._id ? 'Update App' : 'Create App' %>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById('appForm');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    toggleLoading(submitBtn, true, 'SAVING...');
+
+    const formData = new FormData(form);
+    const data = {
+      name: formData.get('name'),
+      appId: formData.get('appId'),
+      platform: formData.get('platform'),
+      isActive: formData.get('isActive') === 'on',
+      serviceAccountJson: formData.get('serviceAccountJson'),
+    };
+
+    // For edit mode, don't send empty json string if user didn't update it
+    const id = formData.get('id');
+    if (id && !data.serviceAccountJson) {
+      delete data.serviceAccountJson;
+    }
+
+    try {
+      const url = id ? `/tenant-api/push-apps/${id}` : '/tenant-api/push-apps';
+      const method = id ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        window.location.href = '/tenant/push-apps';
+      } else {
+        alert(result.message || 'Failed to save app');
+        toggleLoading(submitBtn, false);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred. Please try again.');
+      toggleLoading(submitBtn, false);
+    }
+  });
+
+  // Highlight active radio parent
+  const radios = document.querySelectorAll('input[type="radio"]');
+  radios.forEach((radio) => {
+    radio.addEventListener('change', () => {
+      radios.forEach((r) => {
+        if (r.checked) {
+          r.closest('label').classList.add('bg-blue-50', 'border-blue-200');
+        } else {
+          r.closest('label').classList.remove('bg-blue-50', 'border-blue-200');
+        }
+      });
+    });
+    // Init state
+    if (radio.checked) {
+      radio.closest('label').classList.add('bg-blue-50', 'border-blue-200');
+    }
+  });
+</script>

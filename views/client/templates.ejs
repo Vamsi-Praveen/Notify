@@ -1,0 +1,150 @@
+<div class="max-w-7xl mx-auto space-y-6">
+  <div class="pb-6 border-b border-slate-100 flex items-center justify-between">
+    <div>
+      <h2 class="text-lg font-bold text-slate-800">Available Templates</h2>
+      <p class="text-xs text-slate-500 mt-1">
+        List of templates you can use in your workflows, including global templates.
+      </p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <% if (templates && templates.length > 0) { %> <% templates.forEach(template => { %>
+    <div
+      class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm hover:border-blue-200 transition-colors group relative"
+    >
+      <div class="flex items-start justify-between mb-4">
+        <div class="p-2 bg-slate-50 rounded border border-slate-100">
+          <% if(template.type === 'email') { %>
+          <i data-lucide="mail" class="w-4 h-4 text-blue-500"></i>
+          <% } else if(template.type === 'slack') { %>
+          <i data-lucide="slack" class="w-4 h-4 text-purple-500"></i>
+          <% } else { %>
+          <i data-lucide="file-text" class="w-4 h-4 text-slate-400"></i>
+          <% } %>
+        </div>
+        <div class="flex items-center gap-2">
+          <% if (template.isPublished) { %>
+          <span
+            class="px-1.5 py-0.5 bg-emerald-50 text-emerald-600 text-[8px] font-bold uppercase rounded border border-emerald-100"
+            >Global</span
+          >
+          <% } %>
+          <button
+            onclick="viewTemplate('<%= template._id %>')"
+            class="p-1.5 text-slate-400 hover:text-blue-600 transition-colors"
+          >
+            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+      <div>
+        <h3 class="text-sm font-bold text-slate-800 mb-1"><%= template.name %></h3>
+        <p class="text-[10px] text-slate-400 font-mono uppercase mb-4">
+          <%= template.type %> gateway
+        </p>
+        <div class="flex items-center justify-between pt-4 border-t border-slate-50">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+            >ID: <%= template._id.toString().slice(-6) %></span
+          >
+          <span class="text-[10px] text-slate-400"
+            ><%= new Date(template.createdAt).toLocaleDateString() %></span
+          >
+        </div>
+      </div>
+    </div>
+    <% }) %> <% } else { %>
+    <div class="col-span-full py-20 text-center text-slate-400">
+      <div class="flex flex-col items-center gap-3">
+        <i data-lucide="file-code-2" class="w-10 h-10 text-slate-200"></i>
+        <p class="text-xs lowercase">No templates available.</p>
+      </div>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Modal for viewing template details -->
+<div
+  id="viewModal"
+  class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+>
+  <div
+    class="bg-white rounded-lg shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+  >
+    <div
+      class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50"
+    >
+      <h3 class="text-sm font-bold text-slate-800 uppercase tracking-widest">Template Preview</h3>
+      <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <div class="p-6 overflow-y-auto space-y-4">
+      <div>
+        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+          >Subject</label
+        >
+        <p
+          id="modalSubject"
+          class="text-sm font-medium text-slate-700 p-2 bg-slate-50 rounded mt-1"
+        ></p>
+      </div>
+      <div>
+        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Body</label>
+        <pre
+          id="modalBody"
+          class="text-xs font-mono text-slate-600 p-4 bg-slate-50 rounded mt-1 whitespace-pre-wrap"
+        ></pre>
+      </div>
+      <div>
+        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+          >Fields Used</label
+        >
+        <div id="modalFields" class="flex flex-wrap gap-2 mt-2"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Avoid large inline JSON if possible, but for MVP it works
+  const clientTemplates = <%- JSON.stringify(templates) %>;
+
+  function viewTemplate(id) {
+      const template = clientTemplates.find(t => t._id === id);
+      if (!template) return;
+
+      document.getElementById('modalSubject').textContent = template.subject || '(No Subject)';
+      document.getElementById('modalBody').textContent = template.body;
+
+      const fieldsContainer = document.getElementById('modalFields');
+      fieldsContainer.innerHTML = '';
+      if (template.fields && template.fields.length > 0) {
+          template.fields.forEach(f => {
+              const tag = document.createElement('span');
+              tag.className = 'px-2 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold uppercase rounded border border-blue-100';
+              tag.textContent = f;
+              fieldsContainer.appendChild(tag);
+          });
+      } else {
+          fieldsContainer.innerHTML = '<span class="text-[10px] text-slate-400">No specific fields defined</span>';
+      }
+
+      document.getElementById('viewModal').classList.remove('hidden');
+      lucide.createIcons();
+  }
+
+  function closeModal() {
+      document.getElementById('viewModal').classList.add('hidden');
+  }
+
+  window.onclick = function(event) {
+      const modal = document.getElementById('viewModal');
+      if (event.target == modal) {
+          closeModal();
+      }
+  }
+
+  lucide.createIcons();
+</script>

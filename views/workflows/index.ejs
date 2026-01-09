@@ -1,0 +1,147 @@
+<div class="max-w-7xl mx-auto space-y-6">
+  <div class="pb-6 border-b border-slate-100 flex items-center justify-between">
+    <div>
+      <h2 class="text-lg font-bold text-slate-800">All Workflows</h2>
+      <p class="text-xs text-slate-500 mt-1">Workflows that trigger actions based on events.</p>
+    </div>
+    <a
+      href="/admin/workflows/new"
+      class="inline-flex items-center px-4 py-2 bg-slate-900 hover:bg-black text-white text-[10px] font-bold uppercase tracking-widest rounded transition-all gap-2"
+    >
+      <i data-lucide="plus" class="w-3.5 h-3.5"></i> New Workflow
+    </a>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead
+          class="bg-slate-50/50 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-100"
+        >
+          <tr>
+            <th class="px-6 py-4">Workflow Name</th>
+            <th class="px-6 py-4">Scope</th>
+            <th class="px-6 py-4">Trigger Event</th>
+            <th class="px-6 py-4">Template</th>
+            <th class="px-6 py-4">Integration</th>
+            <th class="px-6 py-4">Status</th>
+            <th class="px-6 py-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <% if (workflows && workflows.length > 0) { %> <% workflows.forEach(workflow => { %>
+          <tr class="hover:bg-slate-50/50 transition-colors">
+            <td class="px-6 py-4">
+              <div class="text-xs font-bold text-slate-800"><%= workflow.name %></div>
+              <div class="text-[10px] text-slate-400 font-mono uppercase">
+                ID: <%= workflow._id.toString().slice(-6) %>
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <% if (!workflow.tenantId) { %>
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-50 text-blue-600 border border-blue-100"
+              >
+                All Tenants
+              </span>
+              <% } else { %>
+              <div class="text-xs font-semibold text-slate-700"><%= workflow.tenantId.name %></div>
+              <div class="text-[9px] text-slate-400 font-bold uppercase tracking-tight italic">
+                Single Tenant
+              </div>
+              <% } %>
+            </td>
+            <td class="px-6 py-4 text-xs font-medium text-slate-600">
+              <span
+                class="bg-slate-50 px-1.5 py-0.5 border border-slate-100 rounded underline decoration-slate-200 decoration-dotted"
+                ><%= workflow.triggerEvent %></span
+              >
+            </td>
+            <td class="px-6 py-4 text-xs text-slate-500">
+              <% if (workflow.actions && workflow.actions.length > 0) { %>
+              <div class="space-y-1">
+                <% workflow.actions.forEach((action, i) => { %>
+                <div class="<%= i > 0 ? 'pt-1 border-t border-slate-50' : '' %>">
+                  <%= action.template?.name || '—' %>
+                </div>
+                <% }) %>
+              </div>
+              <% } else { %> — <% } %>
+            </td>
+            <td class="px-6 py-4">
+              <% if (workflow.actions && workflow.actions.length > 0) { %>
+              <div class="space-y-1">
+                <% workflow.actions.forEach((action, i) => { %>
+                <div class="<%= i > 0 ? 'pt-1 border-t border-slate-50' : '' %>">
+                  <span
+                    class="text-[10px] font-bold text-slate-500 uppercase bg-slate-100 px-1.5 py-0.5 rounded"
+                  >
+                    <%= action.integration?.name || 'Auto' %>
+                  </span>
+                </div>
+                <% }) %>
+              </div>
+              <% } else { %>
+              <span
+                class="text-[10px] font-bold text-slate-500 uppercase bg-slate-100 px-1.5 py-0.5 rounded"
+                >System</span
+              >
+              <% } %>
+            </td>
+            <td class="px-6 py-4">
+              <span
+                class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border <%= workflow.active !== false ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-100 text-slate-400 border-slate-200' %>"
+              >
+                <%= workflow.active !== false ? 'Active' : 'Inactive' %>
+              </span>
+            </td>
+            <td class="px-6 py-4 text-right">
+              <div class="flex items-center justify-end gap-2">
+                <a
+                  href="/admin/workflows/<%= workflow._id %>/edit"
+                  class="p-1.5 text-slate-400 hover:text-blue-600 transition-colors"
+                >
+                  <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                </a>
+                <button
+                  onclick="deleteWorkflow('<%= workflow._id %>')"
+                  class="p-1.5 text-slate-400 hover:text-red-600 transition-colors"
+                >
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <% }) %> <% } else { %>
+          <tr>
+            <td colspan="6" class="px-6 py-20 text-center text-slate-400">
+              <div class="flex flex-col items-center gap-3">
+                <i data-lucide="git-branch-plus" class="w-10 h-10 text-slate-200"></i>
+                <p class="text-xs lowercase">No active workflows found.</p>
+              </div>
+            </td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function deleteWorkflow(id) {
+    if (!(await showConfirm('Are you sure you want to delete this workflow?'))) return;
+    try {
+      const res = await fetch(`/admin/admin-api/workflows/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        await showAlert('Workflow deleted', 'success');
+        window.location.reload();
+      } else {
+        showAlert('Failed to delete workflow');
+      }
+    } catch (e) {
+      showAlert('Network error');
+    }
+  }
+  lucide.createIcons();
+</script>

@@ -1,0 +1,302 @@
+<div class="max-w-7xl mx-auto space-y-6">
+  <!-- Header -->
+  <div class="flex justify-between items-center pb-6 border-b border-slate-100">
+    <div>
+      <h2 class="text-lg font-bold text-slate-800 tracking-tight">Connector Channels</h2>
+      <p class="text-xs text-slate-500 mt-1">
+        Configure SMTP, Slack, and Telegram for automated messaging.
+      </p>
+    </div>
+    <button
+      onclick="openCreateModal()"
+      class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold uppercase tracking-widest rounded-md shadow-sm transition-all gap-2"
+    >
+      <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Channel
+    </button>
+  </div>
+
+  <!-- Integrations Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+    <% if (integrations && integrations.length > 0) { %> <% integrations.forEach(integration => { %>
+    <div
+      class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm hover:border-slate-300 transition-all"
+    >
+      <div class="flex items-start justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 bg-slate-100 rounded-md flex items-center justify-center border border-slate-200"
+          >
+            <i
+              data-lucide="<%= integration.type === 'email' ? 'mail' : integration.type === 'slack' ? 'slack' : integration.type === 'telegram' ? 'send' : 'layers' %>"
+              class="w-5 h-5 text-slate-600"
+            ></i>
+          </div>
+          <div class="min-w-0">
+            <h3 class="text-xs font-bold text-slate-800 truncate"><%= integration.name %></h3>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+              <%= integration.type %>
+            </p>
+          </div>
+        </div>
+        <span
+          class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter border <%= integration.isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-100 text-slate-500 border-slate-200' %>"
+        >
+          <%= integration.isActive ? 'Active' : 'Standby' %>
+        </span>
+      </div>
+      <div class="grid grid-cols-2 gap-2 mt-6 border-t border-slate-50 pt-4">
+        <button
+          onclick="editIntegration('<%= integration._id %>')"
+          class="px-3 py-1.5 text-[10px] font-bold text-slate-600 hover:text-blue-600 hover:bg-blue-50 bg-slate-50 border border-slate-100 rounded transition-all uppercase tracking-widest"
+        >
+          Configure
+        </button>
+        <button
+          onclick="deleteIntegration('<%= integration._id %>')"
+          class="px-3 py-1.5 text-[10px] font-bold text-slate-600 hover:text-red-600 hover:bg-red-50 bg-slate-50 border border-slate-100 rounded transition-all uppercase tracking-widest"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+    <% }) %> <% } else { %>
+    <div
+      class="col-span-full py-16 text-center border-2 border-dashed border-slate-200 rounded-lg bg-white/50 italic-text-off"
+    >
+      <i data-lucide="plug-2" class="w-12 h-12 text-slate-300 mx-auto mb-3"></i>
+      <p class="text-xs text-slate-400 font-medium">No active channels established.</p>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="integrationModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+  <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+  <div class="flex min-h-full items-center justify-center p-4">
+    <div
+      class="relative w-full max-w-md bg-white rounded-lg shadow-xl overflow-hidden border border-slate-200"
+    >
+      <form id="integrationForm" class="p-6">
+        <h3 id="modalTitle" class="text-sm font-bold text-slate-800 uppercase tracking-widest mb-6">
+          Connect Channel
+        </h3>
+        <input type="hidden" id="integrationId" />
+        <div class="space-y-4">
+          <div>
+            <label
+              class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5"
+              >Internal Label</label
+            >
+            <input
+              type="text"
+              id="integrationName"
+              name="name"
+              required
+              class="w-full px-3 py-2 border border-slate-200 rounded focus:border-blue-600 outline-none text-xs"
+              placeholder="e.g. Gmail Prod"
+            />
+          </div>
+          <div>
+            <label
+              class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5"
+              >Channel Protocol</label
+            >
+            <select
+              id="integrationType"
+              name="type"
+              required
+              onchange="updateCredentialFields()"
+              class="w-full px-3 py-2 border border-slate-200 rounded focus:border-blue-600 outline-none text-xs bg-slate-50 font-semibold"
+            >
+              <option value="">-- Choose Type --</option>
+              <option value="email">Email / SMTP</option>
+              <option value="slack">Slack Incoming</option>
+              <option value="telegram">Telegram Bot</option>
+              <option value="webhook">Custom Webhook</option>
+            </select>
+          </div>
+
+          <div id="credentialFields" class="space-y-4 pt-2"></div>
+
+          <div class="pt-4 flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="integrationActive"
+              name="isActive"
+              checked
+              class="w-4 h-4 rounded text-blue-600"
+            />
+            <label
+              for="integrationActive"
+              class="text-[10px] font-bold text-slate-700 uppercase tracking-widest cursor-pointer"
+              >Live Activation</label
+            >
+          </div>
+        </div>
+        <div class="mt-8 flex justify-end gap-3">
+          <button
+            type="button"
+            onclick="closeIntegrationModal()"
+            class="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest px-4"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold uppercase tracking-widest px-6 py-2 rounded shadow-sm"
+          >
+            Save Bridge
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  let integrationsList = [];
+
+  function openCreateModal() {
+    document.getElementById('modalTitle').textContent = 'Connect Channel';
+    document.getElementById('integrationId').value = '';
+    document.getElementById('integrationForm').reset();
+    document.getElementById('credentialFields').innerHTML = '';
+    document.getElementById('integrationModal').classList.remove('hidden');
+  }
+
+  function closeIntegrationModal() {
+    document.getElementById('integrationModal').classList.add('hidden');
+  }
+
+  async function editIntegration(id) {
+    try {
+      const res = await fetch('/tenant-api/integrations');
+      const list = await res.json();
+      const item = list.find((i) => i._id === id);
+      if (!item) return;
+
+      document.getElementById('modalTitle').textContent = 'Update Channel';
+      document.getElementById('integrationId').value = item._id;
+      document.getElementById('integrationName').value = item.name;
+      document.getElementById('integrationType').value = item.type;
+      document.getElementById('integrationActive').checked = item.isActive;
+
+      updateCredentialFields();
+
+      if (item.credentials) {
+        const container = document.getElementById('credentialFields');
+        Object.keys(item.credentials).forEach((key) => {
+          const input = container.querySelector(`[name="credentials.${key}"]`);
+          if (input) input.value = item.credentials[key];
+        });
+      }
+
+      document.getElementById('integrationModal').classList.remove('hidden');
+    } catch (e) {
+      showAlert('Error loading details');
+    }
+  }
+
+  async function deleteIntegration(id) {
+    if (!(await showConfirm('Permanently remove this communication channel?'))) return;
+    try {
+      const res = await fetch(`/tenant-api/integrations/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        await showAlert('Channel successfully removed', 'success');
+        window.location.reload();
+      } else {
+        showAlert('Removal failed');
+      }
+    } catch (e) {
+      showAlert('Gateway communication error');
+    }
+  }
+
+  function updateCredentialFields() {
+    const type = document.getElementById('integrationType').value;
+    const container = document.getElementById('credentialFields');
+    container.innerHTML = '';
+
+    const configs = {
+      email: [
+        { label: 'SMTP Host', name: 'host', placeholder: 'smtp.gmail.com' },
+        { label: 'Port', name: 'port', placeholder: '587' },
+        { label: 'Username', name: 'user', placeholder: 'user@example.com' },
+        { label: 'Password', name: 'pass', type: 'password' },
+        { label: 'From Email', name: 'fromEmail', placeholder: 'notifications@example.com' },
+        { label: 'From Name', name: 'fromName', placeholder: 'My App' },
+      ],
+      slack: [
+        { label: 'Webhook URL', name: 'url', placeholder: 'https://hooks.slack.com/services/...' },
+      ],
+      telegram: [{ label: 'Bot Token', name: 'botToken', placeholder: '123456:ABC-DEF...' }],
+      webhook: [
+        { label: 'Endpoint URL', name: 'url', placeholder: 'https://api.example.com/webhook' },
+      ],
+    };
+
+    if (configs[type]) {
+      configs[type].forEach((field) => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">${
+            field.label
+          }</label>
+          <input type="${field.type || 'text'}" name="credentials.${
+          field.name
+        }" required class="w-full px-3 py-2 border border-slate-200 rounded focus:border-blue-600 outline-none text-xs" placeholder="${
+          field.placeholder || ''
+        }">
+        `;
+        container.appendChild(div);
+      });
+    }
+  }
+
+  document.getElementById('integrationForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('integrationId').value;
+    const isEdit = !!id;
+
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    toggleLoading(submitBtn, true, 'SAVING...');
+
+    const formData = new FormData(e.target);
+    const data = {
+      name: formData.get('name'),
+      type: formData.get('type'),
+      isActive: formData.get('isActive') === 'on',
+      credentials: {},
+    };
+
+    for (let [key, value] of formData.entries()) {
+      if (key.startsWith('credentials.')) {
+        data.credentials[key.split('.')[1]] = value;
+      }
+    }
+
+    try {
+      const url = isEdit ? `/tenant-api/integrations/${id}` : '/tenant-api/integrations';
+      const res = await fetch(url, {
+        method: isEdit ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (res.ok) {
+        await showAlert(isEdit ? 'Configuration updated' : 'Channel established', 'success');
+        window.location.reload();
+      } else {
+        const err = await res.json();
+        showAlert(err.message || 'Validation failed');
+        toggleLoading(submitBtn, false);
+      }
+    } catch (e) {
+      showAlert('Communication error');
+      toggleLoading(submitBtn, false);
+    }
+  });
+
+  lucide.createIcons();
+</script>

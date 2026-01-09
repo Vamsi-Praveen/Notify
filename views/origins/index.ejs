@@ -1,0 +1,246 @@
+<div class="w-full space-y-6">
+  <!-- Header -->
+  <div class="pb-6 border-b border-slate-100 flex items-center justify-between">
+    <div>
+      <h2 class="text-lg font-bold text-slate-800">Allowed Origins</h2>
+      <p class="text-xs text-slate-500 mt-1">
+        Manage CORS policy across all tenants to authorize trusted domains.
+      </p>
+    </div>
+    <button
+      onclick="toggleAddModal()"
+      class="inline-flex items-center px-4 py-2 bg-slate-900 hover:bg-black text-white text-[10px] font-bold uppercase tracking-widest rounded transition-all gap-2"
+    >
+      <i data-lucide="plus" class="w-3.5 h-3.5"></i> Register Origin
+    </button>
+  </div>
+
+  <!-- Search Area -->
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+    <div class="p-4 border-b border-slate-100 bg-slate-50/30">
+      <div class="relative max-w-sm">
+        <i
+          data-lucide="search"
+          class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400"
+        ></i>
+        <input
+          type="text"
+          id="originSearch"
+          onkeyup="filterOrigins()"
+          placeholder="Find authorized domain or tenant..."
+          class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all font-medium"
+        />
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm" id="originsTable">
+        <thead
+          class="bg-slate-50/50 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-100"
+        >
+          <tr>
+            <th class="px-6 py-4">Authorized Origin</th>
+            <th class="px-6 py-4">Associated Tenant</th>
+            <th class="px-6 py-4">Security State</th>
+            <th class="px-6 py-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <% if (origins && origins.length > 0) { origins.forEach(origin => { %>
+          <tr class="hover:bg-slate-50/50 transition-colors origin-row">
+            <td class="px-6 py-4">
+              <div class="text-xs font-bold text-slate-800 origin-url"><%= origin.url %></div>
+            </td>
+            <td class="px-6 py-4">
+              <div class="text-xs font-medium text-slate-600 tenant-name">
+                <%= origin.tenantName %>
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <span
+                class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-bold uppercase"
+              >
+                Authorized
+              </span>
+            </td>
+            <td class="px-6 py-4 text-right">
+              <button
+                onclick="deleteOrigin('<%= origin.tenantId %>', '<%= origin.url %>')"
+                class="p-1.5 text-slate-400 hover:text-red-600 transition-colors"
+              >
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </td>
+          </tr>
+          <% }) %> <% } else { %>
+          <tr id="emptyCell">
+            <td colspan="4" class="px-6 py-12 text-center text-slate-400 text-xs lowercase">
+              No origins registered across management clusters.
+            </td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backsplash -->
+<div
+  id="modalBackdrop"
+  class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 hidden transition-opacity"
+></div>
+
+<!-- Add Origin Modal -->
+<div
+  id="addOriginModal"
+  class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md z-50 hidden"
+>
+  <div
+    class="bg-white rounded shadow-2xl border border-slate-200 overflow-hidden transform transition-all"
+  >
+    <div
+      class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between"
+    >
+      <h3 class="text-xs font-bold text-slate-800 uppercase tracking-widest">
+        Register New Origin
+      </h3>
+      <button onclick="toggleAddModal()" class="text-slate-400 hover:text-slate-600">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <form onsubmit="handleCreateOrigin(event)" class="p-6 space-y-4">
+      <div class="space-y-2">
+        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+          >Target Tenant</label
+        >
+        <select
+          name="tenantId"
+          required
+          class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all font-medium"
+        >
+          <option value="" disabled selected>Select a tenant...</option>
+          <% if (tenants && tenants.length > 0) { tenants.forEach(t => { %>
+          <option value="<%= t.id %>"><%= t.name %></option>
+          <% }) } %>
+        </select>
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+          >Origin URL</label
+        >
+        <input
+          type="text"
+          name="url"
+          required
+          placeholder="https://app.example.com"
+          class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all font-medium"
+        />
+        <p class="text-[9px] text-slate-400">
+          Must include protocol (http/https). Supports wildcards like https://*.example.com
+        </p>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4">
+        <button
+          type="button"
+          onclick="toggleAddModal()"
+          class="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:text-slate-800"
+        >
+          Discard
+        </button>
+        <button
+          type="submit"
+          class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold uppercase tracking-widest rounded shadow-sm transition-all transform active:scale-95"
+        >
+          Authorize Access
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function toggleAddModal() {
+    const modal = document.getElementById('addOriginModal');
+    const backdrop = document.getElementById('modalBackdrop');
+    const isHidden = modal.classList.contains('hidden');
+
+    if (isHidden) {
+      modal.classList.remove('hidden');
+      backdrop.classList.remove('hidden');
+      // Force repaint for animations if any
+    } else {
+      modal.classList.add('hidden');
+      backdrop.classList.add('hidden');
+    }
+  }
+
+  function filterOrigins() {
+    const input = document.getElementById('originSearch');
+    const filter = input.value.toLowerCase();
+    const rows = document.querySelectorAll('.origin-row');
+    let visibleCount = 0;
+
+    rows.forEach((row) => {
+      const url = row.querySelector('.origin-url').textContent.toLowerCase();
+      const tenant = row.querySelector('.tenant-name').textContent.toLowerCase();
+      if (url.includes(filter) || tenant.includes(filter)) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    const emptyCell = document.getElementById('emptyCell');
+    if (emptyCell) {
+      emptyCell.style.display = visibleCount === 0 && rows.length > 0 ? '' : 'none';
+    }
+  }
+
+  async function handleCreateOrigin(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+      const res = await fetch('/admin/admin-api/origins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await res.json();
+      if (res.ok) {
+        await showAlert('Origin registered', 'success');
+        window.location.reload();
+      } else {
+        showAlert(result.message || 'Authorization failed');
+      }
+    } catch (err) {
+      showAlert('Security gateway communication error');
+    }
+  }
+
+  async function deleteOrigin(tenantId, url) {
+    if (!(await showConfirm(`Are you sure you want to revoke access for ${url}?`))) return;
+    try {
+      const res = await fetch(`/admin/admin-api/origins/${tenantId}/${encodeURIComponent(url)}`, {
+        method: 'DELETE',
+      });
+      const result = await res.json();
+      if (res.ok) {
+        await showAlert('Access authorization revoked', 'success');
+        window.location.reload();
+      } else {
+        showAlert(result.message || 'Revocation failed');
+      }
+    } catch (e) {
+      showAlert('Gateway communication error');
+    }
+  }
+
+  lucide.createIcons();
+</script>

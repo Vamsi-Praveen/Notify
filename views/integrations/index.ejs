@@ -1,0 +1,108 @@
+<div class="max-w-7xl mx-auto space-y-6">
+  <div class="pb-6 border-b border-slate-100 flex items-center justify-between">
+    <div>
+      <h2 class="text-lg font-bold text-slate-800 tracking-tight">Delivery Gateways</h2>
+      <p class="text-xs text-slate-500 mt-1">
+        Manage physical notification providers and organizational delivery infrastructure.
+      </p>
+    </div>
+    <a
+      href="/admin/integrations/new"
+      class="inline-flex items-center px-4 py-2 bg-slate-900 hover:bg-black text-white text-[10px] font-bold uppercase tracking-widest rounded transition-all gap-2"
+    >
+      <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Gateway
+    </a>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead
+          class="bg-slate-50/50 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-100"
+        >
+          <tr>
+            <th class="px-6 py-4">Internal Name</th>
+            <th class="px-6 py-4">Provider Type</th>
+            <th class="px-6 py-4">Owner</th>
+            <th class="px-6 py-4">Lifecycle</th>
+            <th class="px-6 py-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <% if (integrations && integrations.length > 0) { integrations.forEach(integration => { %>
+          <tr class="hover:bg-slate-50/50 transition-colors">
+            <td class="px-6 py-4">
+              <div class="text-xs font-bold text-slate-800"><%= integration.name %></div>
+            </td>
+            <td class="px-6 py-4">
+              <span
+                class="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase"
+              >
+                <% let icon = 'plug'; if (integration.type === 'email') icon = 'mail'; else if
+                (integration.type === 'slack') icon = 'slack'; else if (integration.type ===
+                'telegram') icon = 'send'; else if (integration.type === 'sms') icon = 'smartphone';
+                %>
+                <i data-lucide="<%= icon %>" class="w-3.5 h-3.5 text-slate-400"></i>
+                <%= integration.type %>
+              </span>
+            </td>
+            <td class="px-6 py-4 text-xs font-medium text-slate-600">
+              <%= integration.tenantId ? integration.tenantId.name : 'Infrastructure Core' %>
+            </td>
+            <td class="px-6 py-4">
+              <span
+                class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter border <%= integration.active ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100' %>"
+              >
+                <%= integration.active ? 'Active' : 'Offline' %>
+              </span>
+            </td>
+            <td class="px-6 py-4 text-right">
+              <div class="flex items-center justify-end gap-2">
+                <a
+                  href="/admin/integrations/<%= integration._id %>/edit"
+                  class="p-1.5 text-slate-400 hover:text-blue-600 transition-colors"
+                >
+                  <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                </a>
+                <button
+                  onclick="deleteIntegration('<%= integration._id %>')"
+                  class="p-1.5 text-slate-400 hover:text-red-600 transition-colors"
+                >
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <% }) %> <% } else { %>
+          <tr>
+            <td colspan="5" class="px-6 py-20 text-center text-slate-400">
+              <div class="flex flex-col items-center gap-3">
+                <i data-lucide="plug-2" class="w-10 h-10 text-slate-200"></i>
+                <p class="text-xs lowercase">No gateways found.</p>
+              </div>
+            </td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function deleteIntegration(id) {
+    if (!(await showConfirm('Are you sure you want to deactivate this gateway?'))) return;
+    try {
+      const res = await fetch(`/admin/admin-api/integrations/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        await showAlert('Gateway infrastructure decoupled', 'success');
+        window.location.reload();
+      } else {
+        showAlert('Setup validation failed');
+      }
+    } catch (e) {
+      showAlert('Gateway communication error');
+    }
+  }
+  lucide.createIcons();
+</script>

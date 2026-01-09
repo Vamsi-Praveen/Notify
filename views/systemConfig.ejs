@@ -1,0 +1,578 @@
+<div class="max-w-4xl space-y-8">
+  <div class="pb-6 border-b border-slate-100 flex items-center justify-between">
+    <div>
+      <h2 class="text-lg font-bold text-slate-800 tracking-tight">System Settings</h2>
+      <p class="text-xs text-slate-500 mt-1">
+        Configure global integration credentials and service endpoints.
+      </p>
+    </div>
+  </div>
+
+  <form id="systemConfigForm" class="space-y-8 pb-12">
+    <!-- Primary Gateway: SMTP -->
+    <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+      <div
+        class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between"
+      >
+        <div class="flex items-center gap-2">
+          <i data-lucide="mail" class="w-4 h-4 text-blue-600"></i>
+          <h3 class="text-[10px] font-bold text-slate-800 uppercase tracking-widest">
+            Email Service (SMTP)
+          </h3>
+        </div>
+      </div>
+      <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="space-y-2 lg:col-span-2">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+            >Relay Host</label
+          >
+          <input
+            type="text"
+            name="smtp[host]"
+            value="<%= config.smtp ? config.smtp.host : '' %>"
+            class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-semibold"
+          />
+        </div>
+        <div class="space-y-2">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Port</label>
+          <input
+            type="number"
+            name="smtp[port]"
+            value="<%= config.smtp ? config.smtp.port : '' %>"
+            class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-semibold"
+          />
+        </div>
+        <div class="space-y-2">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+            >Username</label
+          >
+          <input
+            type="text"
+            name="smtp[userName]"
+            value="<%= config.smtp ? config.smtp.userName : '' %>"
+            class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-semibold"
+          />
+        </div>
+        <div class="space-y-2">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+            >Password</label
+          >
+          <input
+            type="password"
+            name="smtp[password]"
+            value="<%= config.smtp ? config.smtp.password : '' %>"
+            class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-semibold"
+          />
+        </div>
+        <div class="space-y-2">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+            >Sender Email</label
+          >
+          <input
+            type="email"
+            name="smtp[fromEmail]"
+            value="<%= config.smtp ? config.smtp.fromEmail : '' %>"
+            class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-semibold"
+            placeholder="no-reply@system.com"
+          />
+        </div>
+        <div class="space-y-2">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+            >Display Name</label
+          >
+          <input
+            type="text"
+            name="smtp[displayName]"
+            value="<%= config.smtp ? config.smtp.displayName : '' %>"
+            class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-semibold"
+            placeholder="Notify Service"
+          />
+        </div>
+        <div class="space-y-2 flex items-center gap-3 pt-2">
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" name="smtp[enableSSL]" class="sr-only peer" <%= config.smtp &&
+            config.smtp.enableSSL ? 'checked' : '' %>>
+            <div
+              class="w-8 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"
+            ></div>
+          </label>
+          <label
+            class="text-[10px] font-bold text-slate-400 uppercase tracking-widest cursor-pointer"
+          >
+            Enable SSL/TLS
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Integration Settings -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- Slack -->
+      <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+        <div
+          class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between"
+        >
+          <div class="flex items-center gap-2">
+            <i data-lucide="slack" class="w-4 h-4 text-[#4A154B]"></i>
+            <h3 class="text-[10px] font-bold text-slate-800 uppercase tracking-widest">
+              Slack Integration
+            </h3>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" name="slack[isActive]" class="sr-only peer" <%= config.slack &&
+            config.slack.isActive ? 'checked' : '' %>>
+            <div
+              class="w-8 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"
+            ></div>
+          </label>
+        </div>
+        <div class="p-6 space-y-4">
+          <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+              >Bot Token</label
+            >
+            <input
+              type="password"
+              name="slack[slackBotToken]"
+              value="<%= config.slack ? config.slack.slackBotToken : '' %>"
+              class="w-full px-3 py-2 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-mono"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+              >Webhook URL</label
+            >
+            <input
+              type="text"
+              name="slack[slackWebhookURL]"
+              value="<%= config.slack ? config.slack.slackWebhookURL : '' %>"
+              class="w-full px-3 py-2 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-mono"
+            />
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+                >App Name</label
+              >
+              <input
+                type="text"
+                name="slack[slackAppName]"
+                value="<%= config.slack ? config.slack.slackAppName : '' %>"
+                class="w-full px-3 py-2 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-semibold"
+              />
+            </div>
+            <div class="space-y-2">
+              <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+                >Default Channel</label
+              >
+              <input
+                type="text"
+                name="slack[slackChannelName]"
+                value="<%= config.slack ? config.slack.slackChannelName : '' %>"
+                class="w-full px-3 py-2 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-semibold"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MS Teams -->
+      <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+        <div
+          class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between"
+        >
+          <div class="flex items-center gap-2">
+            <i data-lucide="users" class="w-4 h-4 text-[#6264A7]"></i>
+            <h3 class="text-[10px] font-bold text-slate-800 uppercase tracking-widest">
+              MS Teams integration
+            </h3>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" name="teams[isActive]" class="sr-only peer" <%= config.teams &&
+            config.teams.isActive ? 'checked' : '' %>>
+            <div
+              class="w-8 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"
+            ></div>
+          </label>
+        </div>
+        <div class="p-6 space-y-4">
+          <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+              >Client ID</label
+            >
+            <input
+              type="text"
+              name="teams[clientId]"
+              value="<%= config.teams ? config.teams.clientId : '' %>"
+              class="w-full px-3 py-2 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-mono"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+              >Client Secret</label
+            >
+            <input
+              type="password"
+              name="teams[clientSecret]"
+              value="<%= config.teams ? config.teams.clientSecret : '' %>"
+              class="w-full px-3 py-2 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-mono"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+              >Tenant ID</label
+            >
+            <input
+              type="text"
+              name="teams[tenantId]"
+              value="<%= config.teams ? config.teams.tenantId : '' %>"
+              class="w-full px-3 py-2 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-mono"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile & Push Settings -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- SMS (Twilio) -->
+      <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+          <i data-lucide="phone" class="w-4 h-4 text-emerald-600"></i>
+          <h3 class="text-[10px] font-bold text-slate-800 uppercase tracking-widest">
+            SMS Settings (Twilio)
+          </h3>
+        </div>
+        <div class="p-6 space-y-4">
+          <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+              >Account SID</label
+            >
+            <input
+              type="text"
+              name="sms[twilio][accountSid]"
+              value="<%= config.sms && config.sms.twilio ? config.sms.twilio.accountSid : '' %>"
+              class="w-full px-3 py-2 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-mono"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+              >Auth Token</label
+            >
+            <input
+              type="password"
+              name="sms[twilio][authToken]"
+              value="<%= config.sms && config.sms.twilio ? config.sms.twilio.authToken : '' %>"
+              class="w-full px-3 py-2 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-mono"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+              >From Number</label
+            >
+            <input
+              type="text"
+              name="sms[twilio][fromNumber]"
+              value="<%= config.sms && config.sms.twilio ? config.sms.twilio.fromNumber : '' %>"
+              class="w-full px-3 py-2 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-semibold"
+              placeholder="+1234567890"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Push (Firebase) -->
+      <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+          <i data-lucide="flame" class="w-4 h-4 text-orange-500"></i>
+          <h3 class="text-[10px] font-bold text-slate-800 uppercase tracking-widest">
+            Push Settings (Firebase)
+          </h3>
+        </div>
+        <div class="p-6 space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+                >App ID</label
+              >
+              <input
+                type="text"
+                name="pushNotification[firebase][appId]"
+                value="<%= config.pushNotification && config.pushNotification.firebase ? config.pushNotification.firebase.appId : '' %>"
+                class="w-full px-3 py-2 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-mono"
+              />
+            </div>
+            <div class="space-y-2">
+              <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+                >Project ID</label
+              >
+              <input
+                type="text"
+                name="pushNotification[firebase][projectId]"
+                value="<%= config.pushNotification && config.pushNotification.firebase ? config.pushNotification.firebase.projectId : '' %>"
+                class="w-full px-3 py-2 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-mono"
+              />
+            </div>
+          </div>
+          <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+              >API Key</label
+            >
+            <input
+              type="password"
+              name="pushNotification[firebase][apiKey]"
+              value="<%= config.pushNotification && config.pushNotification.firebase ? config.pushNotification.firebase.apiKey : '' %>"
+              class="w-full px-3 py-2 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-mono"
+            />
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+                >Sender ID</label
+              >
+              <input
+                type="text"
+                name="pushNotification[firebase][messagingSenderId]"
+                value="<%= config.pushNotification && config.pushNotification.firebase ? config.pushNotification.firebase.messagingSenderId : '' %>"
+                class="w-full px-3 py-2 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-mono"
+              />
+            </div>
+            <div class="space-y-2">
+              <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+                >Storage Bucket</label
+              >
+              <input
+                type="text"
+                name="pushNotification[firebase][storageBucket]"
+                value="<%= config.pushNotification && config.pushNotification.firebase ? config.pushNotification.firebase.storageBucket : '' %>"
+                class="w-full px-3 py-2 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-mono"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Telegram & Others -->
+    <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+      <div
+        class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between"
+      >
+        <div class="flex items-center gap-2">
+          <i data-lucide="send" class="w-4 h-4 text-[#0088cc]"></i>
+          <h3 class="text-[10px] font-bold text-slate-800 uppercase tracking-widest">
+            Telegram Integration
+          </h3>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" name="telegram[isActive]" class="sr-only peer" <%= config.telegram
+          && config.telegram.isActive ? 'checked' : '' %>>
+          <div
+            class="w-8 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"
+          ></div>
+        </label>
+      </div>
+      <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-2">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+            >Bot Token</label
+          >
+          <input
+            type="password"
+            name="telegram[botToken]"
+            value="<%= config.telegram ? config.telegram.botToken : '' %>"
+            class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-mono"
+          />
+        </div>
+        <div class="space-y-2">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+            >Bot Name</label
+          >
+          <input
+            type="text"
+            name="telegram[botName]"
+            value="<%= config.telegram ? config.telegram.botName : '' %>"
+            class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-semibold"
+          />
+        </div>
+        <div class="space-y-2 md:col-span-2">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+            >Webhook URL</label
+          >
+          <input
+            type="text"
+            name="telegram[webhookUrl]"
+            value="<%= config.telegram ? config.telegram.webhookUrl : '' %>"
+            class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-mono"
+            placeholder="https://api.telegram.org/bot<token>/setWebhook"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Security Settings (Admin Password) -->
+    <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+      <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+        <i data-lucide="lock" class="w-4 h-4 text-slate-600"></i>
+        <h3 class="text-[10px] font-bold text-slate-800 uppercase tracking-widest">
+          Security Settings
+        </h3>
+      </div>
+      <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+              >Current Password</label
+            >
+            <input
+              type="password"
+              id="currentPassword"
+              class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-semibold"
+              placeholder="••••••••"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+              >New Password</label
+            >
+            <input
+              type="password"
+              id="newPassword"
+              class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-semibold"
+              placeholder="••••••••"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+              >Confirm Password</label
+            >
+            <input
+              type="password"
+              id="confirmPassword"
+              class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-semibold"
+              placeholder="••••••••"
+            />
+          </div>
+        </div>
+        <div class="mt-4 flex justify-end">
+          <button
+            type="button"
+            id="changePasswordBtn"
+            class="px-4 py-2 bg-slate-800 hover:bg-black text-white text-[10px] font-bold uppercase tracking-widest rounded transition-colors"
+          >
+            Update Password
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="flex items-center justify-between pt-6 border-t border-slate-100">
+      <p class="text-[10px] text-slate-400 font-medium uppercase tracking-tight italic">
+        Note: Changes here affect the global system. Handle with caution.
+      </p>
+      <button
+        type="submit"
+        class="px-10 py-3 bg-slate-900 hover:bg-black text-white text-[10px] font-bold uppercase tracking-widest rounded shadow-lg transition-all transform active:scale-95"
+      >
+        Save Settings
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  document.getElementById('systemConfigForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    toggleLoading(submitBtn, true, 'Saving...');
+
+    const formData = new FormData(e.target);
+    const data = {};
+
+    const setNestedValue = (obj, path, value) => {
+      const keys = path.split(/[\[\]]+/).filter((k) => k);
+      let current = obj;
+      for (let i = 0; i < keys.length - 1; i++) {
+        if (!current[keys[i]]) current[keys[i]] = {};
+        current = current[keys[i]];
+      }
+      current[keys[keys.length - 1]] = value;
+    };
+
+    for (let [key, value] of formData.entries()) {
+      if (key.includes('[')) {
+        setNestedValue(data, key, value);
+      } else {
+        data[key] = value;
+      }
+    }
+
+    const checkboxes = e.target.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach((cb) => {
+      setNestedValue(data, cb.name, cb.checked);
+    });
+
+    try {
+      const res = await fetch('/admin/admin-api/system-config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (res.ok) {
+        showAlert('Settings saved successfully', 'success');
+      } else {
+        showAlert('Failed to save settings');
+      }
+    } catch (e) {
+      showAlert('Network connectivity error');
+    } finally {
+      toggleLoading(submitBtn, false);
+    }
+  });
+
+  const changePasswordBtn = document.getElementById('changePasswordBtn');
+  if (changePasswordBtn) {
+    changePasswordBtn.addEventListener('click', async () => {
+      const currentPassword = document.getElementById('currentPassword').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        return showAlert('All password fields are required', 'error');
+      }
+
+      if (newPassword !== confirmPassword) {
+        return showAlert('New passwords do not match', 'error');
+      }
+
+      toggleLoading(changePasswordBtn, true, 'Updating...');
+
+      try {
+        const res = await fetch('/admin/admin-api/change-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showAlert(data.message, 'success');
+          // Clear fields
+          document.getElementById('currentPassword').value = '';
+          document.getElementById('newPassword').value = '';
+          document.getElementById('confirmPassword').value = '';
+        } else {
+          showAlert(data.message, 'error');
+        }
+      } catch (e) {
+        showAlert('Error updating password', 'error');
+      } finally {
+        toggleLoading(changePasswordBtn, false);
+      }
+    });
+  }
+
+  lucide.createIcons();
+</script>

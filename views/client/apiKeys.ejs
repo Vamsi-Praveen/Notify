@@ -1,0 +1,344 @@
+<div class="max-w-7xl mx-auto space-y-6">
+  <!-- Header -->
+  <div class="flex justify-between items-center pb-6 border-b border-slate-100">
+    <div>
+      <h2 class="text-lg font-bold text-slate-800">Authentication Keys</h2>
+      <p class="text-xs text-slate-500 mt-1">Manage secure API access keys for your tenant.</p>
+    </div>
+    <button
+      onclick="openCreateModal()"
+      class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold uppercase tracking-widest rounded-md shadow-sm transition-all gap-2"
+    >
+      <i data-lucide="plus" class="w-3.5 h-3.5"></i> Generate New Key
+    </button>
+  </div>
+
+  <!-- Keys List -->
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead
+          class="bg-slate-50/50 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-100"
+        >
+          <tr>
+            <th class="px-6 py-4">Key Name</th>
+            <th class="px-6 py-4">Key Prefix</th>
+            <th class="px-6 py-4">IP Security</th>
+            <th class="px-6 py-4">Assigned Scopes</th>
+            <th class="px-6 py-4">Created On</th>
+            <th class="px-6 py-4">Status</th>
+            <th class="px-6 py-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <% if (keys && keys.length > 0) { %> <% keys.forEach(key => { %>
+          <tr class="hover:bg-slate-50/50 transition-colors">
+            <td class="px-6 py-4 text-xs font-semibold text-slate-800"><%= key.name %></td>
+            <td
+              class="px-6 py-4 font-mono text-xs text-slate-500 underline decoration-slate-200 decoration-dotted"
+            >
+              <%= key.keyPrefix %>...
+            </td>
+            <td class="px-6 py-4">
+              <span
+                class="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200"
+              >
+                <%= key.allowedIps ? key.allowedIps.length : 0 %> IPs
+              </span>
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex flex-wrap gap-1">
+                <% key.scopes.slice(0, 3).forEach(scope => { %>
+                <span
+                  class="inline-flex items-center px-1.5 py-0.5 rounded border border-blue-100 bg-blue-50 text-[10px] font-bold text-blue-700 lowercase"
+                >
+                  <%= scope %>
+                </span>
+                <% }) %> <% if (key.scopes.length > 3) { %>
+                <span class="text-[10px] font-bold text-slate-400"
+                  >+<%= key.scopes.length - 3 %></span
+                >
+                <% } %>
+              </div>
+            </td>
+            <td class="px-6 py-4 text-[10px] text-slate-500">
+              <%= new Date(key.createdAt).toLocaleDateString() %>
+            </td>
+            <td class="px-6 py-4">
+              <span
+                class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border <%= key.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100' %>"
+              >
+                <%= key.status %>
+              </span>
+            </td>
+            <td class="px-6 py-4 text-right">
+              <div class="flex items-center justify-end gap-2">
+                <% if (key.status === 'active') { %>
+                <button
+                  onclick="refreshKey('<%= key._id %>', this)"
+                  class="text-[10px] font-bold text-slate-600 hover:text-blue-600 uppercase tracking-widest border border-slate-200 hover:border-blue-600 px-2 py-1 rounded transition-all"
+                >
+                  Rotate
+                </button>
+                <button
+                  onclick="revokeKey('<%= key._id %>', this)"
+                  class="text-[10px] font-bold text-slate-600 hover:text-red-600 uppercase tracking-widest border border-slate-200 hover:border-red-600 px-2 py-1 rounded transition-all"
+                >
+                  Revoke
+                </button>
+                <% } %>
+              </div>
+            </td>
+          </tr>
+          <% }) %> <% } else { %>
+          <tr>
+            <td colspan="6" class="px-6 py-12 text-center text-slate-400 lowercase text-xs">
+              No active records found.
+            </td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Simple Modals -->
+<div id="createKeyModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+  <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+  <div class="flex min-h-full items-center justify-center p-4">
+    <div
+      class="relative w-full max-w-md bg-white rounded-lg shadow-xl overflow-hidden border border-slate-200"
+    >
+      <form id="createKeyForm" class="p-6">
+        <h3 class="text-sm font-bold text-slate-800 uppercase tracking-widest mb-6">
+          Create New API Key
+        </h3>
+        <div class="space-y-4">
+          <div>
+            <label
+              class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5"
+              >Identifier Name</label
+            >
+            <input
+              type="text"
+              name="name"
+              required
+              class="w-full px-3 py-2 border border-slate-200 rounded focus:border-blue-600 outline-none text-xs"
+              placeholder="e.g. Server A"
+            />
+          </div>
+          <div>
+            <label
+              class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5"
+              >Permission Scopes</label
+            >
+            <div
+              class="space-y-2 max-h-40 overflow-y-auto p-3 border border-slate-100 rounded-lg bg-slate-50 font-mono text-[10px]"
+            >
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="scopes"
+                  value="event:write"
+                  checked
+                  class="w-3.5 h-3.5 rounded"
+                />
+                <span>event:write</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="scopes"
+                  value="notify.send"
+                  class="w-3.5 h-3.5 rounded"
+                />
+                <span>notify.send</span>
+              </label>
+            </div>
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5"
+              >Allowed IPs</label
+            >
+            <textarea
+              name="allowedIps"
+              rows="3"
+              placeholder="Leave empty to allow all..."
+              class="w-full px-3 py-2 border border-slate-200 rounded focus:border-blue-600 outline-none text-xs font-mono"
+            ></textarea>
+          </div>
+          <div></div>
+        </div>
+        <div class="mt-8 flex justify-end gap-3">
+          <button
+            type="button"
+            onclick="closeCreateModal()"
+            class="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest px-4"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold uppercase tracking-widest px-6 py-2 rounded shadow-sm"
+          >
+            Save Key
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Display Key Modal -->
+<div id="keySuccessModal" class="hidden fixed inset-0 z-[60] overflow-y-auto">
+  <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+  <div class="flex min-h-full items-center justify-center p-4 text-center">
+    <div
+      class="relative w-full max-w-sm bg-white rounded-lg shadow-2xl p-8 border border-slate-200"
+    >
+      <div
+        class="mb-4 inline-flex items-center justify-center h-10 w-10 rounded-full bg-emerald-50"
+      >
+        <i data-lucide="check" class="h-5 w-5 text-emerald-600"></i>
+      </div>
+      <h3 class="text-sm font-bold text-slate-800 uppercase tracking-widest">
+        Key Successfully Generated
+      </h3>
+      <p class="text-[10px] text-slate-400 font-bold uppercase mt-2">
+        Storage notice: Copy this key now. It won't be visible again.
+      </p>
+
+      <div class="mt-6 p-4 bg-slate-50 rounded border border-slate-100 text-left">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[10px] font-bold text-slate-400 uppercase">Secret Key</span>
+          <button
+            onclick="copyKey()"
+            class="text-blue-600 text-[10px] font-bold uppercase hover:underline"
+          >
+            Copy
+          </button>
+        </div>
+        <code
+          id="newKeyDisplay"
+          class="text-xs font-mono text-slate-800 break-all select-all"
+        ></code>
+      </div>
+
+      <button
+        onclick="window.location.reload()"
+        class="mt-8 w-full py-2 bg-slate-800 hover:bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest rounded transition-all"
+      >
+        Finalize & Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openCreateModal() {
+    document.getElementById('createKeyForm').reset();
+    document.getElementById('createKeyModal').classList.remove('hidden');
+  }
+
+  function closeCreateModal() {
+    document.getElementById('createKeyModal').classList.add('hidden');
+  }
+
+  document.getElementById('createKeyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    toggleLoading(submitBtn, true, 'GENERATING...');
+
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    data.scopes = formData.getAll('scopes');
+    if (data.allowedIps) {
+      data.allowedIps = data.allowedIps
+        .split('\n')
+        .map((ip) => ip.trim())
+        .filter((ip) => ip.length > 0);
+    }
+
+    try {
+      const res = await fetch('/tenant-api/api-keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+
+      if (res.ok) {
+        closeCreateModal();
+        document.getElementById('newKeyDisplay').textContent = json.key;
+        document.getElementById('keySuccessModal').classList.remove('hidden');
+        lucide.createIcons();
+        toggleLoading(submitBtn, false);
+      } else {
+        showAlert(json.message || 'Token operation failure');
+        toggleLoading(submitBtn, false);
+      }
+    } catch (e) {
+      showAlert('Gateway communication error');
+      toggleLoading(submitBtn, false);
+    }
+  });
+
+  function copyKey() {
+    const keyText = document.getElementById('newKeyDisplay').textContent;
+    navigator.clipboard.writeText(keyText);
+    const btn = document.querySelector('button[onclick="copyKey()"]');
+    if (btn) {
+      const originalText = btn.textContent;
+      btn.textContent = 'COPIED!';
+      setTimeout(() => {
+        btn.textContent = originalText;
+      }, 2000);
+    }
+  }
+
+  async function refreshKey(id, btn) {
+    if (
+      !(await showConfirm(
+        'Rotating this key will revoke the current one and issue a new secret. Proceed?'
+      ))
+    )
+      return;
+    if (btn) toggleLoading(btn, true, '');
+
+    try {
+      const res = await fetch(`/tenant-api/api-keys/${id}/refresh`, { method: 'POST' });
+      const json = await res.json();
+      if (res.ok) {
+        document.getElementById('newKeyDisplay').textContent = json.key;
+        document.getElementById('keySuccessModal').classList.remove('hidden');
+        lucide.createIcons();
+      } else {
+        showAlert(json.message || 'Rotation failed');
+      }
+    } catch (e) {
+      showAlert('Gateway communication error');
+    } finally {
+      if (btn) toggleLoading(btn, false);
+    }
+  }
+
+  async function revokeKey(id, btn) {
+    if (!(await showConfirm('Are you sure you want to permanently revoke this key?'))) return;
+    if (btn) toggleLoading(btn, true, '');
+
+    try {
+      const res = await fetch(`/tenant-api/api-keys/${id}/revoke`, { method: 'PUT' });
+      if (res.ok) {
+        await showAlert('Identity token revoked', 'success');
+        window.location.reload();
+      } else {
+        showAlert('Revoke failed');
+        if (btn) toggleLoading(btn, false);
+      }
+    } catch (e) {
+      showAlert('Gateway communication error');
+      if (btn) toggleLoading(btn, false);
+    }
+  }
+
+  lucide.createIcons();
+</script>

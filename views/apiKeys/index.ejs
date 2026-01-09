@@ -1,0 +1,391 @@
+<div class="max-w-7xl mx-auto space-y-6">
+  <div class="pb-6 border-b border-slate-100 flex items-center justify-between">
+    <div>
+      <h2 class="text-lg font-bold text-slate-800">API Keys List</h2>
+      <p class="text-xs text-slate-500 mt-1">
+        Manage high-security API tokens for multi-tenant service interaction.
+      </p>
+    </div>
+    <button
+      onclick="openCreateModal()"
+      class="inline-flex items-center px-4 py-2 bg-slate-900 hover:bg-black text-white text-[10px] font-bold uppercase tracking-widest rounded transition-all gap-2"
+    >
+      <i data-lucide="plus" class="w-3.5 h-3.5"></i> Issue Token
+    </button>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead
+          class="bg-slate-50/50 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-100"
+        >
+          <tr>
+            <th class="px-6 py-4">Descriptor</th>
+            <th class="px-6 py-4">Owning Cluster</th>
+            <th class="px-6 py-4">Identity Hash</th>
+            <th class="px-6 py-4">Permitted Scopes</th>
+            <th class="px-6 py-4">Created</th>
+            <th class="px-6 py-4">Lifecycle</th>
+            <th class="px-6 py-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <% if (keys && keys.length > 0) { %> <% keys.forEach(key => { %>
+          <tr class="hover:bg-slate-50/50 transition-colors">
+            <td class="px-6 py-4">
+              <div class="text-xs font-bold text-slate-800"><%= key.name %></div>
+            </td>
+            <td class="px-6 py-4 text-xs font-medium text-slate-600">
+              <%= key.tenantId ? key.tenantId.name : 'System Core' %>
+            </td>
+            <td class="px-6 py-4">
+              <span
+                class="text-[10px] font-mono text-slate-400 bg-slate-50 px-1.5 py-0.5 border border-slate-100 rounded"
+                ><%= key.keyPrefix %>...</span
+              >
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-1.5">
+                <span
+                  class="text-[10px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 uppercase"
+                >
+                  <%= key.scopes ? key.scopes.length : 0 %>
+                </span>
+                <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest"
+                  >Scopes</span
+                >
+              </div>
+            </td>
+            <td class="px-6 py-4 text-[10px] text-slate-400 font-medium">
+              <%= new Date(key.createdAt).toLocaleDateString() %>
+            </td>
+            <td class="px-6 py-4">
+              <span
+                class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border <%= key.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100' %>"
+              >
+                <%= key.status %>
+              </span>
+            </td>
+            <td class="px-6 py-4 text-right">
+              <div class="flex items-center justify-end gap-3">
+                <% if (key.status === 'active') { %>
+                <button
+                  onclick="openEditModal('<%= JSON.stringify(key) %>')"
+                  class="text-[10px] font-bold text-blue-600 hover:text-blue-800 uppercase tracking-widest transition-colors"
+                >
+                  Edit
+                </button>
+                <button
+                  onclick="revokeKey('<%= key._id %>', this)"
+                  class="text-[10px] font-bold text-red-500 hover:text-red-700 uppercase tracking-widest transition-colors"
+                >
+                  Revoke
+                </button>
+                <% } %>
+              </div>
+            </td>
+          </tr>
+          <% }) %> <% } else { %>
+          <tr>
+            <td colspan="6" class="px-6 py-20 text-center text-slate-400">
+              <div class="flex flex-col items-center gap-3">
+                <i data-lucide="key-round" class="w-10 h-10 text-slate-200"></i>
+                <p class="text-xs lowercase">No active tokens found.</p>
+              </div>
+            </td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Issue Modal -->
+<div id="createKeyModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+  <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+  <div class="flex min-h-full items-center justify-center p-4">
+    <div
+      class="relative transform overflow-hidden rounded border border-slate-200 bg-white p-8 shadow-2xl sm:w-full sm:max-w-lg"
+    >
+      <form id="createKeyForm" class="space-y-6">
+        <input type="hidden" name="keyId" id="keyIdInput" />
+        <div class="mb-6">
+          <h3 id="modalTitle" class="text-xs font-bold text-slate-800 uppercase tracking-widest">
+            Issue Access Token
+          </h3>
+          <p
+            id="modalSub"
+            class="text-[10px] text-slate-500 mt-1 font-medium uppercase tracking-tighter"
+          >
+            Define scope and ownership for new credentials.
+          </p>
+        </div>
+
+        <div class="space-y-4">
+          <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+              >Label</label
+            >
+            <input
+              type="text"
+              name="name"
+              required
+              placeholder="CI_CD_INTEGRATION"
+              class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-semibold"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+              >Allowed IPs</label
+            >
+            <textarea
+              name="allowedIps"
+              rows="3"
+              placeholder="Leave empty to allow all..."
+              class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-mono"
+            ></textarea>
+          </div>
+          <div id="tenantSelectGroup" class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+              >Target Cluster</label
+            >
+            <select
+              name="tenantId"
+              id="tenantIdInput"
+              required
+              class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs bg-white font-semibold"
+            >
+              <option value="" disabled selected>Identify owner...</option>
+              <% tenants.forEach(t => { %>
+              <option value="<%= t._id %>"><%= t.name %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+              >Name</label
+            >
+            <div
+              class="grid grid-cols-1 gap-2 p-3 bg-slate-50/50 rounded border border-slate-100 max-h-[200px] overflow-y-auto"
+            >
+              <% ['event:write', 'notify.send', 'notify.read', 'workflows.read', 'workflows.write',
+              'templates.read', 'templates.write'].forEach(scope => { %>
+              <label
+                class="flex items-center gap-3 p-2 rounded hover:bg-white transition-all cursor-pointer group"
+              >
+                <input
+                  type="checkbox"
+                  name="scopes"
+                  value="<%= scope %>"
+                  class="w-3.5 h-3.5 rounded text-blue-600"
+                />
+                <span
+                  class="text-[10px] font-bold text-slate-500 uppercase tracking-widest group-hover:text-slate-800"
+                  ><%= scope.replace('.', '_').toUpperCase() %></span
+                >
+              </label>
+              <% }) %>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-8 flex justify-end gap-3 pt-6 border-t border-slate-100">
+          <button
+            type="button"
+            onclick="closeCreateModal()"
+            class="px-6 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+          >
+            Abort
+          </button>
+          <button
+            type="submit"
+            id="submitBtn"
+            class="px-8 py-2.5 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest rounded shadow-sm hover:bg-black transition-all"
+          >
+            Generate
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Success Modal -->
+<div id="keySuccessModal" class="hidden fixed inset-0 z-[60] overflow-y-auto">
+  <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+  <div class="flex min-h-full items-center justify-center p-4">
+    <div
+      class="relative transform overflow-hidden rounded border border-slate-200 bg-white p-8 shadow-2xl sm:w-full sm:max-w-lg text-center"
+    >
+      <div
+        class="mx-auto flex h-10 w-10 items-center justify-center rounded bg-emerald-50 mb-4 border border-emerald-100"
+      >
+        <i data-lucide="check" class="h-5 w-5 text-emerald-600"></i>
+      </div>
+      <h3 class="text-xs font-bold text-slate-800 uppercase tracking-widest">Key Generated</h3>
+      <p class="text-[10px] text-slate-500 mt-2 font-medium uppercase tracking-tighter">
+        This credential will not be stored in plaintext. Synchronize it with your vault now.
+      </p>
+
+      <div
+        class="mt-6 p-4 bg-slate-50 rounded border border-slate-200 flex items-center justify-between gap-4"
+      >
+        <code
+          id="newKeyDisplay"
+          class="text-[10px] font-mono text-blue-600 break-all select-all font-bold"
+        ></code>
+        <button
+          onclick="copyKey()"
+          class="text-slate-400 hover:text-slate-600 p-1 flex-shrink-0 transition-colors"
+        >
+          <i data-lucide="copy" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <button
+        onclick="window.location.reload()"
+        class="mt-8 w-full py-3 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest rounded hover:bg-black transition-all"
+      >
+        Acknowledge
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openCreateModal() {
+    document.getElementById('modalTitle').textContent = 'Issue Access Token';
+    document.getElementById('modalSub').textContent =
+      'Define scope and ownership for new credentials.';
+    document.getElementById('submitBtn').textContent = 'Generate';
+    document.getElementById('keyIdInput').value = '';
+    const tenantInput = document.getElementById('tenantIdInput');
+    tenantInput.setAttribute('required', 'true');
+    document.getElementById('tenantSelectGroup').classList.remove('hidden');
+    document.getElementById('createKeyForm').reset();
+    document.getElementById('createKeyModal').classList.remove('hidden');
+  }
+
+  function openEditModal(keyStr) {
+    const key = JSON.parse(keyStr);
+    document.getElementById('modalTitle').textContent = 'Manage Permissions';
+    document.getElementById(
+      'modalSub'
+    ).textContent = `Updating scopes for token: ${key.keyPrefix}...`;
+    document.getElementById('submitBtn').textContent = 'Update Policy';
+    document.getElementById('keyIdInput').value = key._id;
+
+    const tenantInput = document.getElementById('tenantIdInput');
+    tenantInput.removeAttribute('required');
+    document.getElementById('tenantSelectGroup').classList.add('hidden');
+
+    // Fill fields
+    const form = document.getElementById('createKeyForm');
+    form.name.value = key.name;
+    if (key.allowedIps) {
+      form.allowedIps.value = key.allowedIps.join('\n');
+    } else {
+      form.allowedIps.value = '';
+    }
+
+    // Reset checkboxes
+    form.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+      cb.checked = key.scopes.includes(cb.value);
+    });
+
+    document.getElementById('createKeyModal').classList.remove('hidden');
+  }
+
+  function closeCreateModal() {
+    document.getElementById('createKeyModal').classList.add('hidden');
+  }
+
+  document.getElementById('createKeyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const keyId = document.getElementById('keyIdInput').value;
+    const isEdit = !!keyId;
+
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    toggleLoading(submitBtn, true, isEdit ? 'UPDATING...' : 'GENERATING...');
+
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    data.scopes = formData.getAll('scopes');
+    if (data.allowedIps) {
+      data.allowedIps = data.allowedIps
+        .split('\n')
+        .map((ip) => ip.trim())
+        .filter((ip) => ip.length > 0);
+    }
+
+    try {
+      const url = isEdit ? `/admin/admin-api/api-keys/${keyId}` : '/admin/admin-api/api-keys';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+
+      if (res.ok) {
+        if (isEdit) {
+          await showAlert('Policy updated successfully', 'success');
+          window.location.reload();
+        } else {
+          closeCreateModal();
+          document.getElementById('newKeyDisplay').textContent = json.key;
+          document.getElementById('keySuccessModal').classList.remove('hidden');
+          lucide.createIcons();
+          toggleLoading(submitBtn, false); // Reset button for next time (though page often reloads or modal closes)
+        }
+      } else {
+        showAlert(json.message || 'Token operation failure');
+        toggleLoading(submitBtn, false);
+      }
+    } catch (e) {
+      showAlert('Gateway communication error');
+      toggleLoading(submitBtn, false);
+    }
+  });
+
+  function copyKey() {
+    const key = document.getElementById('newKeyDisplay').textContent;
+    navigator.clipboard.writeText(key);
+    const btn = document.querySelector('button[onclick="copyKey()"]');
+    const originalContent = btn.innerHTML;
+    btn.innerHTML = '<i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>';
+    lucide.createIcons();
+    setTimeout(() => {
+      btn.innerHTML = originalContent;
+      lucide.createIcons();
+    }, 2000);
+  }
+
+  async function revokeKey(id, btn) {
+    if (!(await showConfirm('Are you sure you want to revoke this key?'))) return;
+
+    // Find the button element if not passed (for safety)
+    // but we will update the EJS to pass 'this'
+    if (btn) toggleLoading(btn, true, 'Revoking...');
+
+    try {
+      const res = await fetch(`/admin/admin-api/api-keys/${id}/revoke`, { method: 'PUT' });
+      if (res.ok) {
+        await showAlert('Identity token revoked', 'success');
+        window.location.reload();
+      } else {
+        showAlert('Revoke failed');
+        if (btn) toggleLoading(btn, false);
+      }
+    } catch (e) {
+      showAlert('Gateway communication error');
+      if (btn) toggleLoading(btn, false);
+    }
+  }
+  lucide.createIcons();
+</script>

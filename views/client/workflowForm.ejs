@@ -1,0 +1,330 @@
+<div class="max-w-4xl mx-auto space-y-8">
+  <div class="pb-6 border-b border-slate-100 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <a href="/tenant/workflows" class="p-2 border border-slate-200 rounded text-slate-400 hover:text-slate-600 hover:border-slate-300 transition-all">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+      </a>
+      <div>
+        <h2 class="text-lg font-bold text-slate-800"><%= workflow._id ? 'Edit Workflow' : 'Create New Workflow' %></h2>
+        <p class="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-bold">Settings for event triggers and notifications.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
+    <form id="workflowForm" class="space-y-8">
+      <% if (workflow._id) { %>
+        <input type="hidden" name="id" value="<%= workflow._id %>">
+      <% } %>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="space-y-2">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest" for="name">Workflow Name</label>
+          <input type="text" name="name" id="name" required placeholder="User Onboarding Workflow"
+            value="<%= workflow.name || '' %>"
+            class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-semibold">
+        </div>
+        <div class="space-y-2">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest" for="triggerEvent">Trigger Event</label>
+          <input type="text" name="triggerEvent" id="triggerEvent" required placeholder="user.signup.success"
+            value="<%= workflow.triggerEvent || '' %>"
+            class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-semibold">
+        </div>
+        <div class="space-y-2">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest" for="priority">Priority</label>
+          <select name="priority" id="priority" class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs bg-white font-semibold">
+            <option value="critical" <%= workflow.priority === 'critical' ? 'selected' : '' %>>Critical</option>
+            <option value="high" <%= workflow.priority === 'high' ? 'selected' : '' %>>High</option>
+            <option value="medium" <%= workflow.priority === 'medium' || !workflow.priority ? 'selected' : '' %>>Medium</option>
+            <option value="low" <%= workflow.priority === 'low' ? 'selected' : '' %>>Low</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="pt-6 border-t border-slate-50 flex items-center">
+        <label class="flex items-center gap-2 cursor-pointer group">
+          <input type="checkbox" name="active" class="w-4 h-4 rounded text-blue-600 border-slate-300" <%= workflow.active !== false ? 'checked' : '' %>>
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest group-hover:text-slate-800 transition-colors">Active</span>
+        </label>
+      </div>
+
+      <div id="actionsContainer" class="space-y-6 pt-8 border-t border-slate-50">
+        <div class="flex items-center justify-between">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Actions</label>
+          <button type="button" onclick="addAction()" class="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-widest flex items-center gap-1 group">
+            <i data-lucide="plus" class="w-3 h-3 group-hover:scale-110 transition-transform"></i> Add Action
+          </button>
+        </div>
+
+        <% if (workflow.actions && workflow.actions.length > 0) { %>
+          <% workflow.actions.forEach((action, index) => { %>
+            <div class="action-row bg-slate-50/50 p-6 rounded-lg border border-slate-200 relative grid grid-cols-1 md:grid-cols-2 gap-6" id="action-<%= index %>">
+              <button type="button" onclick="removeAction('action-<%= index %>')" class="absolute -top-3 -right-3 w-8 h-8 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 shadow-sm transition-all hover:scale-110">
+                <i data-lucide="x" class="w-4 h-4"></i>
+              </button>
+              <div class="space-y-2">
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Message Template</label>
+                <select name="actions[<%= index %>][template]" required onchange="handleTemplateChange()"
+                  class="template-select w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs bg-white font-semibold">
+                  <option value="" disabled selected>Select template...</option>
+                  <% templates.forEach(t => { %>
+                    <option value="<%= t._id %>" data-fields='<%= JSON.stringify(t.fields || []) %>' <%= action.template && (action.template._id || action.template).toString() === t._id.toString() ? 'selected' : '' %>>
+                      <%= t.name %> [<%= t.type %>] <%= t.isPublished ? '(Global)' : '' %>
+                    </option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="space-y-2">
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Integration (Optional)</label>
+                <select name="actions[<%= index %>][integration]"
+                  class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs bg-white font-semibold">
+                  <option value="">Default (Auto)</option>
+                  <% integrations.forEach(i => { %>
+                    <option value="<%= i._id %>" <%= action.integration && (action.integration._id || action.integration).toString() === i._id.toString() ? 'selected' : '' %>>
+                      <%= i.name %> [<%= i.type %>]
+                    </option>
+                  <% }) %>
+                </select>
+              </div>
+            </div>
+          <% }) %>
+        <% } %>
+      </div>
+
+      <div class="pt-8 border-t border-slate-50">
+        <div class="flex items-center justify-between mb-4">
+           <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Filters (Optional)</label>
+           <button type="button" onclick="addRule()" class="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-widest flex items-center gap-1 group">
+            <i data-lucide="plus" class="w-3 h-3 group-hover:scale-110 transition-transform"></i> Add Filter
+           </button>
+        </div>
+        
+        <div id="rulesContainer" class="space-y-3">
+          <% if (workflow.rules && workflow.rules.length > 0) { %>
+            <% workflow.rules.forEach((rule, index) => { %>
+              <div class="rule-row grid grid-cols-12 gap-3" id="rule-<%= index %>">
+                <select name="rules[<%= index %>][field]" class="field-select col-span-4 px-3 py-2 rounded border border-slate-200 text-xs bg-white font-medium focus:border-blue-600 outline-none" data-current-value="<%= rule.field %>">
+                  <option value="<%= rule.field %>" selected><%= rule.field %></option>
+                </select>
+                <select name="rules[<%= index %>][operator]" class="col-span-3 px-3 py-2 rounded border border-slate-200 text-xs bg-white focus:border-blue-600 outline-none">
+                  <option value="equals" <%= rule.operator === 'equals' ? 'selected' : '' %>>is equal to</option>
+                  <option value="greater_than" <%= rule.operator === 'greater_than' ? 'selected' : '' %>>is greater than</option>
+                  <option value="less_than" <%= rule.operator === 'less_than' ? 'selected' : '' %>>is less than</option>
+                </select>
+                <input type="text" name="rules[<%= index %>][value]" placeholder="value" value="<%= rule.value %>" class="col-span-4 px-3 py-2 rounded border border-slate-200 text-xs font-mono">
+                <button type="button" onclick="removeRule('rule-<%= index %>')" class="col-span-1 flex items-center justify-center text-slate-400 hover:text-red-600 transition-colors">
+                  <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+              </div>
+            <% }) %>
+          <% } else { %>
+             <p class="text-[10px] text-slate-400 uppercase font-bold" id="noRulesMsg">No filters added: This workflow will trigger for every event.</p>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="pt-10 flex items-center justify-end gap-4 border-t border-slate-100">
+        <a href="/tenant/workflows" class="px-6 py-2.5 text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors">Cancel</a>
+        <button type="submit" class="px-10 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold uppercase tracking-widest rounded shadow-md transition-all active:scale-95">
+          <%= workflow._id ? 'Save Workflow' : 'Create Workflow' %>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<template id="ruleTemplate">
+  <div class="rule-row grid grid-cols-12 gap-3">
+    <select class="field-select col-span-4 px-3 py-2 rounded border border-slate-200 text-xs bg-white font-medium focus:border-blue-600 outline-none">
+      <option value="" disabled selected>Select field...</option>
+    </select>
+    <select class="col-span-3 px-3 py-2 rounded border border-slate-200 text-xs bg-white font-medium focus:border-blue-600 outline-none">
+      <option value="equals">is equal to</option>
+      <option value="greater_than">is greater than</option>
+      <option value="less_than">is less than</option>
+      <option value="contains">contains</option>
+    </select>
+    <input type="text" placeholder="value" class="col-span-4 px-3 py-2 rounded border border-slate-200 text-xs font-mono">
+    <button type="button" class="col-span-1 flex items-center justify-center text-slate-400 hover:text-red-600 delete-rule-btn">
+      <i data-lucide="x" class="w-4 h-4"></i>
+    </button>
+  </div>
+</template>
+
+<template id="actionTemplate">
+  <div class="action-row bg-slate-50/50 p-6 rounded-lg border border-slate-200 relative grid grid-cols-1 md:grid-cols-2 gap-6">
+    <button type="button" class="delete-action-btn absolute -top-3 -right-3 w-8 h-8 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 shadow-sm transition-all hover:scale-110">
+      <i data-lucide="x" class="w-4 h-4"></i>
+    </button>
+    <div class="space-y-2">
+      <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Message Template</label>
+      <select required class="template-select w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs bg-white font-semibold">
+        <option value="" disabled selected>Select template...</option>
+        <% templates.forEach(t => { %>
+          <option value="<%= t._id %>" data-fields='<%= JSON.stringify(t.fields || []) %>'>
+            <%= t.name %> [<%= t.type %>] <%= t.isPublished ? '(Global)' : '' %>
+          </option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="space-y-2">
+      <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Integration (Optional)</label>
+      <select class="integration-select w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs bg-white font-semibold">
+        <option value="">Default (Auto)</option>
+        <% integrations.forEach(i => { %>
+          <option value="<%= i._id %>">
+            <%= i.name %> [<%= i.type %>]
+          </option>
+        <% }) %>
+      </select>
+    </div>
+  </div>
+</template>
+
+<script>
+  let ruleIndex = Number("<%= (workflow.rules && workflow.rules.length) || 0 %>");
+  let actionIndex = Number("<%= (workflow.actions && workflow.actions.length) || 0 %>");
+
+  function addAction() {
+    const container = document.getElementById('actionsContainer');
+    const template = document.getElementById('actionTemplate');
+    const clone = template.content.cloneNode(true);
+    const row = clone.querySelector('.action-row');
+    row.id = `action-${actionIndex}`;
+    
+    const selects = row.querySelectorAll('select');
+    selects[0].name = `actions[${actionIndex}][template]`;
+    selects[1].name = `actions[${actionIndex}][integration]`;
+    
+    selects[0].addEventListener('change', handleTemplateChange);
+    row.querySelector('.delete-action-btn').onclick = () => removeAction(`action-${actionIndex}`);
+    
+    container.appendChild(row);
+    actionIndex++;
+    lucide.createIcons();
+  }
+
+  function removeAction(id) {
+    document.getElementById(id).remove();
+    handleTemplateChange();
+  }
+
+  function handleTemplateChange() {
+    const selects = document.querySelectorAll('.template-select');
+    const allFields = new Set();
+    
+    selects.forEach(select => {
+      const option = select.options[select.selectedIndex];
+      if (option && option.dataset.fields) {
+        const fields = JSON.parse(option.dataset.fields);
+        fields.forEach(f => allFields.add(f));
+      }
+    });
+
+    const fieldSelects = document.querySelectorAll('.field-select');
+    fieldSelects.forEach(fieldSelect => {
+      const currentValue = fieldSelect.dataset.currentValue || fieldSelect.value;
+      fieldSelect.innerHTML = '<option value="" disabled>Select field...</option>';
+      
+      allFields.forEach(field => {
+        const opt = document.createElement('option');
+        opt.value = field;
+        opt.textContent = field;
+        if (field === currentValue) opt.selected = true;
+        fieldSelect.appendChild(opt);
+      });
+    });
+  }
+
+  function addRule() {
+    const container = document.getElementById('rulesContainer');
+    const noRulesMsg = document.getElementById('noRulesMsg');
+    if (noRulesMsg) noRulesMsg.style.display = 'none';
+
+    const template = document.getElementById('ruleTemplate');
+    const clone = template.content.cloneNode(true);
+    const row = clone.querySelector('.rule-row');
+    row.id = `rule-${ruleIndex}`;
+    
+    const inputs = row.querySelectorAll('input, select');
+    inputs[0].name = `rules[${ruleIndex}][field]`;
+    inputs[1].name = `rules[${ruleIndex}][operator]`;
+    inputs[2].name = `rules[${ruleIndex}][value]`;
+    
+    row.querySelector('.delete-rule-btn').onclick = () => removeRule(`rule-${ruleIndex}`);
+    
+    container.appendChild(row);
+    ruleIndex++;
+    handleTemplateChange();
+    lucide.createIcons();
+  }
+
+  function removeRule(id) {
+    document.getElementById(id).remove();
+  }
+
+  document.getElementById('workflowForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    toggleLoading(submitBtn, true, 'SAVING...');
+
+    const formData = new FormData(e.target);
+    const data = {};
+    const rules = [];
+    const actions = [];
+
+    for (let [key, value] of formData.entries()) {
+      if (key.startsWith('rules[')) {
+        const match = key.match(/rules\[(\d+)\]\[(\w+)\]/);
+        if (match) {
+          const index = parseInt(match[1]);
+          const field = match[2];
+          if (!rules[index]) rules[index] = {};
+          rules[index][field] = value;
+        }
+      } else if (key.startsWith('actions[')) {
+        const match = key.match(/actions\[(\d+)\]\[(\w+)\]/);
+        if (match) {
+          const index = parseInt(match[1]);
+          const field = match[2];
+          if (!actions[index]) actions[index] = {};
+          actions[index][field] = value || null;
+        }
+      } else if (key === 'active') {
+        data.active = true;
+      } else {
+        data[key] = value;
+      }
+    }
+    
+    data.rules = rules.filter(r => r && r.field);
+    data.actions = actions.filter(a => a && a.template);
+    if (!formData.has('active')) data.active = false;
+
+    const id = data.id;
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `/tenant-api/workflows/${id}` : '/tenant-api/workflows';
+    
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      if (res.ok) {
+        await showAlert(id ? 'Workflow saved' : 'Workflow created', 'success');
+        window.location.href = '/tenant/workflows';
+      } else {
+        const err = await res.json();
+        showAlert(err.message || 'Could not save workflow');
+        toggleLoading(submitBtn, false);
+      }
+    } catch (e) {
+      showAlert('Network error');
+      toggleLoading(submitBtn, false);
+    }
+  });
+  handleTemplateChange();
+  lucide.createIcons();
+</script>

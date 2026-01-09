@@ -1,0 +1,252 @@
+<div class="max-w-7xl mx-auto space-y-6">
+  <div class="pb-6 border-b border-slate-100 flex items-center justify-between">
+    <div>
+      <h2 class="text-lg font-bold text-slate-800">Queue Management</h2>
+      <p class="text-xs text-slate-500 mt-1">
+        Monitor background notification jobs and system throughput.
+      </p>
+    </div>
+    <div class="flex items-center gap-2">
+      <span
+        id="refreshTimer"
+        class="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-1 rounded border border-slate-100"
+      >
+        Auto-refreshing in 30s
+      </span>
+      <button
+        onclick="fetchStats()"
+        class="p-2 text-slate-400 hover:text-blue-600 hover:bg-slate-50 rounded-full transition-all"
+      >
+        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+    <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Waiting</p>
+      <p id="stat-waiting" class="text-2xl font-bold text-slate-800">0</p>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 text-blue-600">
+        Active
+      </p>
+      <p id="stat-active" class="text-2xl font-bold text-blue-600">0</p>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+      <p
+        class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 text-emerald-600"
+      >
+        Completed
+      </p>
+      <p id="stat-completed" class="text-2xl font-bold text-emerald-600">0</p>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 text-red-600">
+        Failed
+      </p>
+      <p id="stat-failed" class="text-2xl font-bold text-red-600">0</p>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+      <p
+        class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 text-orange-600"
+      >
+        Delayed
+      </p>
+      <p id="stat-delayed" class="text-2xl font-bold text-orange-600">0</p>
+    </div>
+  </div>
+
+  <!-- Jobs Table -->
+  <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+    <div
+      class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between"
+    >
+      <h3 class="text-[10px] font-bold text-slate-800 uppercase tracking-widest">Recent Jobs</h3>
+      <div id="loadingIndicator" class="hidden">
+        <div
+          class="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"
+        ></div>
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead
+          class="bg-slate-50/50 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-100"
+        >
+          <tr>
+            <th class="px-6 py-4">Job ID</th>
+            <th class="px-6 py-4">Event</th>
+            <th class="px-6 py-4">Tenant</th>
+            <th class="px-6 py-4">Progress / State</th>
+            <th class="px-6 py-4">Attempts</th>
+            <th class="px-6 py-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="jobsTableBody" class="divide-y divide-slate-100">
+          <!-- Jobs injected here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  let refreshInterval = 30;
+  let timer;
+
+  async function fetchStats() {
+    const loader = document.getElementById('loadingIndicator');
+    loader.classList.remove('hidden');
+
+    try {
+      const resp = await fetch('/admin/admin-api/queue/stats');
+
+      if (!resp.ok) {
+        if (resp.status === 429) {
+          showAlert('Too many requests. Please wait a moment.', 'error');
+          return;
+        }
+        throw new Error('Stats fetch failed');
+      }
+
+      const data = await resp.json();
+
+      // Update stats
+      document.getElementById('stat-waiting').textContent = data.stats.waiting;
+      document.getElementById('stat-active').textContent = data.stats.active;
+      document.getElementById('stat-completed').textContent = data.stats.completed;
+      document.getElementById('stat-failed').textContent = data.stats.failed;
+      document.getElementById('stat-delayed').textContent = data.stats.delayed;
+
+      const tbody = document.getElementById('jobsTableBody');
+      tbody.innerHTML = '';
+
+      if (data.jobs && data.jobs.length > 0) {
+        data.jobs.forEach((job) => {
+          const row = document.createElement('tr');
+          row.className = 'hover:bg-slate-50/50 transition-colors';
+
+          const stateColors = {
+            active: 'bg-blue-50 text-blue-700 border-blue-100',
+            waiting: 'bg-slate-100 text-slate-600 border-slate-200',
+            failed: 'bg-red-50 text-red-700 border-red-100',
+            delayed: 'bg-orange-50 text-orange-700 border-orange-100',
+            completed: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+          };
+
+          const colorClass = stateColors[job.state] || stateColors.waiting;
+
+          row.innerHTML = `
+            <td class="px-6 py-4">
+              <div class="text-[10px] font-mono font-bold text-slate-400">#${job.id}</div>
+              <div class="text-[9px] text-slate-300 mt-0.5">${new Date(
+                job.timestamp
+              ).toLocaleTimeString()}</div>
+            </td>
+            <td class="px-6 py-4 text-xs font-bold text-slate-700">
+              ${job.data.eventName || 'SYSTEM_JOB'}
+            </td>
+            <td class="px-6 py-4 text-xs text-slate-500 font-medium">
+              ${job.data.tenantId || 'GLOBAL'}
+            </td>
+            <td class="px-6 py-4">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${colorClass}">
+                ${job.state}
+              </span>
+              ${
+                job.failedReason
+                  ? `<p class="text-[9px] text-red-500 mt-1 max-w-[200px] truncate" title="${job.failedReason}">${job.failedReason}</p>`
+                  : ''
+              }
+            </td>
+            <td class="px-6 py-4 text-xs text-slate-500 font-mono">
+              ${job.attemptsMade}
+            </td>
+            <td class="px-6 py-4 text-right">
+              <div class="flex items-center justify-end gap-2">
+                ${
+                  job.state === 'failed'
+                    ? `
+                  <button onclick="retryJob('${job.id}', this)" class="p-1.5 text-slate-400 hover:text-emerald-600 border border-slate-100 rounded hover:bg-white shadow-sm transition-all">
+                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                  </button>
+                `
+                    : ''
+                }
+                <button onclick="deleteJob('${
+                  job.id
+                }', this)" class="p-1.5 text-slate-400 hover:text-red-600 border border-slate-100 rounded hover:bg-white shadow-sm transition-all">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+      } else {
+        tbody.innerHTML =
+          '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400 italic">No active or waiting jobs found.</td></tr>';
+      }
+
+      lucide.createIcons();
+    } catch (e) {
+      console.error(e);
+      showAlert('Failed to connect to queue gateway', 'error');
+    } finally {
+      loader.classList.add('hidden');
+      resetTimer();
+    }
+  }
+
+  async function retryJob(id, btn) {
+    if (!confirm('Retry this job?')) return;
+    if (btn) toggleLoading(btn, true, ''); // No text, just spinner or keep icon
+
+    try {
+      const resp = await fetch(`/admin/admin-api/queue/retry/${id}`, { method: 'POST' });
+      if (resp.ok) {
+        showAlert('Job scheduled for retry', 'success');
+        fetchStats();
+      }
+    } catch (e) {
+      showAlert('Retry failed');
+    } finally {
+      if (btn) toggleLoading(btn, false);
+    }
+  }
+
+  async function deleteJob(id, btn) {
+    if (!confirm('Permanently remove this job from queue?')) return;
+    if (btn) toggleLoading(btn, true, '');
+
+    try {
+      const resp = await fetch(`/admin/admin-api/queue/delete/${id}`, { method: 'DELETE' });
+      if (resp.ok) {
+        showAlert('Job removed', 'success');
+        fetchStats();
+      }
+    } catch (e) {
+      showAlert('Delete failed');
+    } finally {
+      if (btn) toggleLoading(btn, false);
+    }
+  }
+
+  function resetTimer() {
+    clearInterval(timer);
+    refreshInterval = 30;
+    timer = setInterval(() => {
+      refreshInterval--;
+      const timerEl = document.getElementById('refreshTimer');
+      if (timerEl) timerEl.textContent = `Auto-refreshing in ${refreshInterval}s`;
+      if (refreshInterval <= 0) {
+        fetchStats();
+      }
+    }, 1000);
+  }
+
+  // Initial fetch
+  fetchStats();
+</script>
