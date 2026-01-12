@@ -4,6 +4,7 @@ import * as pushAppController from '../controllers/pushApp.controller.js';
 import * as tenantApiKeyController from '../controllers/tenantApiKey.controller.js';
 import * as tenantIntegrationController from '../controllers/tenantIntegration.controller.js';
 import * as tenantSettingsController from '../controllers/tenantSettings.controller.js';
+import * as tenantTemplateController from '../controllers/tenantTemplate.controller.js';
 import * as tenantWorkflowController from '../controllers/tenantWorkflow.controller.js';
 import ApiKey from '../models/apiKey.model.js';
 import Integration from '../models/integration.model.js';
@@ -46,6 +47,7 @@ router.post('/login', async (req, res) => {
       _id: tenant._id,
       name: tenant.name,
       email: tenant.email,
+      allowedChannels: tenant.allowedChannels,
     };
 
     res.redirect('/dashboard');
@@ -166,6 +168,21 @@ router.get('/tenant/templates', requireTenantAuth, async (req, res) => {
     res.status(500).send('Error loading templates');
   }
 });
+
+router.get('/tenant/templates/new', requireTenantAuth, tenantTemplateController.getNewTemplateForm);
+router.get(
+  '/tenant/templates/:id/edit',
+  requireTenantAuth,
+  tenantTemplateController.getEditTemplateForm
+);
+
+router.post('/tenant-api/templates', requireTenantAuth, tenantTemplateController.createTemplate);
+router.put('/tenant-api/templates/:id', requireTenantAuth, tenantTemplateController.updateTemplate);
+router.delete(
+  '/tenant-api/templates/:id',
+  requireTenantAuth,
+  tenantTemplateController.deleteTemplate
+);
 
 router.get('/tenant/workflows', requireTenantAuth, tenantWorkflowController.getWorkflows);
 router.get('/tenant/workflows/new', requireTenantAuth, tenantWorkflowController.getNewWorkflowForm);

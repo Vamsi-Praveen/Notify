@@ -6,6 +6,13 @@
         List of templates you can use in your workflows, including global templates.
       </p>
     </div>
+    <a
+      href="/tenant/templates/new"
+      class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold uppercase tracking-widest rounded shadow-sm transition-all transform active:scale-95 flex items-center gap-2"
+    >
+      <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+      <span>New Template</span>
+    </a>
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -30,12 +37,31 @@
             >Global</span
           >
           <% } %>
+
           <button
             onclick="viewTemplate('<%= template._id %>')"
             class="p-1.5 text-slate-400 hover:text-blue-600 transition-colors"
+            title="Preview"
           >
             <i data-lucide="eye" class="w-3.5 h-3.5"></i>
           </button>
+
+          <% if (template.tenantId && template.tenantId.toString() === tenant._id.toString()) { %>
+          <a
+            href="/tenant/templates/<%= template._id %>/edit"
+            class="p-1.5 text-slate-400 hover:text-amber-500 transition-colors"
+            title="Edit"
+          >
+            <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+          </a>
+          <button
+            onclick="deleteTemplate('<%= template._id %>')"
+            class="p-1.5 text-slate-400 hover:text-red-500 transition-colors"
+            title="Delete"
+          >
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          </button>
+          <% } %>
         </div>
       </div>
       <div>
@@ -147,4 +173,23 @@
   }
 
   lucide.createIcons();
+
+  async function deleteTemplate(id) {
+    if (!confirm('Are you sure you want to delete this template?')) return;
+
+    try {
+      const res = await fetch(`/tenant-api/templates/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        const err = await res.json();
+        alert(err.message || 'Error deleting template');
+      }
+    } catch (e) {
+      alert('Network error');
+    }
+  }
 </script>

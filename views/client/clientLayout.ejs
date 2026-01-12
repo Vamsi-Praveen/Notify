@@ -59,14 +59,6 @@
         </div>
 
         <a
-          href="/tenant/push-apps"
-          class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors <%= path.startsWith('/tenant/push-apps') ? 'sidebar-link-active' : 'text-slate-400 hover:text-white hover:bg-slate-800' %>"
-        >
-          <i data-lucide="smartphone" class="w-4 h-4"></i>
-          Mobile Apps
-        </a>
-
-        <a
           href="/tenant/api-keys"
           class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors <%= path.startsWith('/tenant/api-keys') ? 'sidebar-link-active' : 'text-slate-400 hover:text-white hover:bg-slate-800' %>"
         >
@@ -97,6 +89,16 @@
           <i data-lucide="plug-2" class="w-4 h-4"></i>
           Integrations
         </a>
+
+        <% if (tenant && tenant.allowedChannels && tenant.allowedChannels.includes('push')) { %>
+        <a
+          href="/tenant/push-apps"
+          class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors <%= path.startsWith('/tenant/push-apps') ? 'sidebar-link-active' : 'text-slate-400 hover:text-white hover:bg-slate-800' %>"
+        >
+          <i data-lucide="smartphone" class="w-4 h-4"></i>
+          Mobile Apps
+        </a>
+        <%}%>
 
         <a
           href="/tenant/logs"

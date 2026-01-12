@@ -1,0 +1,492 @@
+<div class="max-w-[1440px] mx-auto space-y-6">
+  <!-- Header -->
+  <div class="pb-6 border-b border-slate-100 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <a
+        href="/tenant/templates"
+        class="p-2 border border-slate-200 rounded text-slate-400 hover:text-slate-600 hover:border-slate-300 transition-colors"
+      >
+        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+      </a>
+      <div>
+        <h2 class="text-lg font-bold text-slate-800">
+          <%= template._id ? 'Modify Template' : 'Initialize Template' %>
+        </h2>
+        <p class="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-bold">
+          Tenant Template Node
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+    <!-- Editor Panel -->
+    <div class="bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
+      <form id="templateForm" class="space-y-6" data-integrations="<%= JSON.stringify(integrations || []) %>">
+        <% if (template._id) { %>
+        <input type="hidden" name="id" value="<%= template._id %>" />
+        <% } %>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest" for="name"
+              >Identifier Name</label
+            >
+            <input
+              type="text"
+              name="name"
+              id="name"
+              required
+              placeholder="e.g. USER_WELCOME"
+              value="<%= template.name || '' %>"
+              class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-semibold"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest" for="type"
+              >Gateway Protocol</label
+            >
+            <select
+              name="type"
+              id="type"
+              required
+              class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs bg-white font-semibold"
+            >
+              <% if (tenant && tenant.allowedChannels && tenant.allowedChannels.includes('email')) { %>
+              <option value="email" <%= template.type === 'email' ? 'selected' : '' %>>Email (SMTP/SES)</option>
+              <% } %>
+              <% if (tenant && tenant.allowedChannels && tenant.allowedChannels.includes('slack')) { %>
+              <option value="slack" <%= template.type === 'slack' ? 'selected' : '' %>>Slack Message</option>
+              <% } %>
+              <% if (tenant && tenant.allowedChannels && tenant.allowedChannels.includes('push')) { %>
+              <option value="push" <%= template.type === 'push' ? 'selected' : '' %>>Push Notification</option>
+              <% } %>
+              <% if (tenant && tenant.allowedChannels && tenant.allowedChannels.includes('sms')) { %>
+              <option value="sms" <%= template.type === 'sms' ? 'selected' : '' %>>SMS Gateway</option>
+              <% } %>
+            </select>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest" for="integration">Integration</label>
+            <select
+              name="integration"
+              id="integration"
+              class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs bg-white font-semibold"
+            >
+              <option value="">System Default</option>
+              <!-- Populated by JS -->
+            </select>
+          </div>
+          
+           <div class="space-y-2 flex items-center pt-6">
+            <label class="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="checkbox"
+                name="isPublished"
+                class="w-4 h-4 rounded text-blue-600 border-slate-300"
+                <%= template.isPublished ? 'checked' : '' %>
+              />
+              <span
+                class="text-[10px] font-bold text-slate-500 uppercase tracking-widest group-hover:text-slate-800 transition-colors"
+                >Publish Template</span
+              >
+            </label>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <label
+            class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+            for="subject"
+            >Protocol Subject</label
+          >
+          <input
+            type="text"
+            name="subject"
+            id="subject"
+            required
+            placeholder="e.g. Welcome to {{platform_name}}!"
+            value="<%= template.subject || '' %>"
+            class="w-full px-3 py-2.5 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-medium"
+          />
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest" for="body"
+            >Payload Body</label
+          >
+          <textarea
+            name="body"
+            id="body"
+            rows="16"
+            required
+            placeholder="Type your template here..."
+            class="w-full px-4 py-3 rounded border border-slate-200 focus:border-blue-600 outline-none text-xs font-mono bg-slate-50/50 leading-relaxed"
+          ><%= template.body || '' %></textarea>
+        </div>
+
+        <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Template Fields (for filtering)</label>
+            <div id="fieldsContainer" class="flex flex-wrap gap-2 p-3 border border-slate-200 rounded min-h-[44px]">
+                <% if (template.fields && template.fields.length > 0) { %>
+                    <% template.fields.forEach(field => { %>
+                        <div class="field-tag bg-slate-100 px-2 py-1 rounded flex items-center gap-1.5 border border-slate-200">
+                            <span class="text-[10px] font-mono font-bold text-slate-600"><%= field %></span>
+                            <button type="button" onclick="this.parentElement.remove()" class="text-slate-400 hover:text-red-500">
+                                <i data-lucide="x" class="w-3 h-3"></i>
+                            </button>
+                            <input type="hidden" name="fields[]" value="<%= field %>">
+                        </div>
+                    <% }) %>
+                <% } %>
+                <input type="text" id="addFieldInput" placeholder="Add field..." class="flex-1 outline-none text-[10px] font-mono bg-transparent min-w-[80px]">
+            </div>
+            <p class="text-[9px] text-slate-400 uppercase">Type field name (e.g. order_id) and press Enter or comma.</p>
+        </div>
+
+        <div class="pt-6 flex items-center justify-end gap-3 border-t border-slate-100">
+          <a
+            href="/tenant/templates"
+            class="px-6 py-2.5 text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors"
+            >Cancel</a
+          >
+          <button
+            type="submit"
+            class="px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold uppercase tracking-widest rounded shadow-sm transition-all transform active:scale-95"
+          >
+            <%= template._id ? 'Update Template' : 'Create Template' %>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Preview Panel -->
+    <div class="sticky top-6 space-y-4">
+      <div class="bg-white rounded-lg overflow-hidden shadow-sm border border-slate-200">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+            <h3 class="text-[10px] font-bold text-slate-800 uppercase tracking-widest">
+              Live Inspector
+            </h3>
+          </div>
+          <div class="flex items-center gap-4">
+               <span id="previewStatus" class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Synced</span>
+          </div>
+        </div>
+
+        <!-- Channel Preview Interface -->
+        <div class="p-6 bg-slate-50/30 min-h-[500px] flex flex-col">
+            <!-- Email Preview (Iframe) -->
+            <div id="emailPreviewContainer" class="flex-1 hidden">
+                <div class="bg-white rounded border border-slate-200 h-full overflow-hidden flex flex-col shadow-sm">
+                    <div class="px-4 py-2 bg-slate-50 border-b border-slate-100 flex items-center gap-3">
+                        <div class="flex gap-1.5">
+                            <div class="w-2.5 h-2.5 rounded-full bg-slate-200"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-slate-200"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-slate-200"></div>
+                        </div>
+                        <div id="emailSubjectPreview" class="text-[10px] text-slate-400 font-medium truncate italic">Subject line preview...</div>
+                    </div>
+                    <iframe id="emailIframe" class="w-full flex-1 border-none bg-white"></iframe>
+                </div>
+            </div>
+
+            <!-- Slack Preview -->
+            <div id="slackPreviewContainer" class="flex-1 hidden flex items-center justify-center p-8">
+                <div class="bg-[#1A1D21] text-[#D1D2D3] p-4 rounded-lg w-full max-w-lg border border-white/5 flex gap-3 shadow-2xl">
+                    <div class="w-9 h-9 rounded bg-blue-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs uppercase">
+                        NB
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-baseline gap-2 mb-0.5">
+                            <span class="font-bold text-[15px] hover:underline cursor-pointer">NotifyBot</span>
+                            <span class="bg-[#1D1C1D] text-[#ABABAD] text-[10px] font-bold px-1 rounded uppercase">App</span>
+                            <span class="text-[12px] text-[#ABABAD]">12:45 PM</span>
+                        </div>
+                        <div id="slackBodyPreview" class="text-[15px] leading-relaxed whitespace-pre-wrap break-words"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SMS/Push Preview -->
+            <div id="smsPreviewContainer" class="flex-1 hidden flex flex-col items-center justify-center p-8">
+                <div class="bg-white border border-slate-200 p-4 rounded-2xl w-[280px] shadow-xl space-y-1 transform transition-all hover:scale-[1.02]">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center gap-2">
+                             <div class="w-5 h-5 bg-blue-600 rounded flex items-center justify-center shadow-sm">
+                                <i data-lucide="bell" class="w-3 h-3 text-white"></i>
+                             </div>
+                             <span class="text-[10px] font-bold text-slate-800 uppercase tracking-widest">Notification</span>
+                        </div>
+                        <span class="text-[10px] text-slate-400">now</span>
+                    </div>
+                    <p id="smsSubjectPreview" class="text-xs font-bold text-slate-900 truncate"></p>
+                    <p id="smsBodyPreview" class="text-[11px] text-slate-600 line-clamp-3 leading-snug"></p>
+                </div>
+                <div class="mt-8 text-center">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-bold">Standard Device Render</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mock Data Editor -->
+        <div class="border-t border-slate-100 bg-white p-6">
+           <div class="flex items-center justify-between mb-3">
+               <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mock Variables (JSON)</label>
+               <div class="flex items-center gap-2">
+                   <div id="jsonBadge" class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                   <span id="jsonLabel" class="text-[9px] font-bold text-slate-400 uppercase">Valid JSON</span>
+               </div>
+           </div>
+           <textarea 
+            id="mockData" 
+            rows="6" 
+            class="w-full bg-slate-50 border border-slate-200 rounded p-3 text-xs font-mono text-slate-700 focus:outline-none focus:border-blue-600 transition-all resize-none"
+           >{
+  "first_name": "John",
+  "platform_name": "NotifyPortal",
+  "action_url": "https://example.com/confirm",
+  "item_name": "MacBook Pro M3"
+}</textarea>
+           <p class="text-[9px] text-slate-400 mt-2 uppercase tracking-tight">Real-time contextual injection logic inspector.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.min.js"></script>
+<script>
+  const typeSelect = document.getElementById('type');
+  const integrationSelect = document.getElementById('integration');
+  
+  const integrations = JSON.parse(document.getElementById('templateForm').dataset.integrations || '[]');
+  const currentIntegrationId = "<%= template.integration || '' %>";
+  
+  const subjectInput = document.getElementById('subject');
+  const bodyInput = document.getElementById('body');
+  const mockDataInput = document.getElementById('mockData');
+  const addFieldInput = document.getElementById('addFieldInput');
+  const fieldsContainer = document.getElementById('fieldsContainer');
+  
+  const emailContainer = document.getElementById('emailPreviewContainer');
+  const slackContainer = document.getElementById('slackPreviewContainer');
+  const smsContainer = document.getElementById('smsPreviewContainer');
+  
+  const emailIframe = document.getElementById('emailIframe');
+  const emailSubPreview = document.getElementById('emailSubjectPreview');
+  const slackBodyPreview = document.getElementById('slackBodyPreview');
+  const smsSubPreview = document.getElementById('smsSubjectPreview');
+  const smsBodyPreview = document.getElementById('smsBodyPreview');
+  
+  const jsonBadge = document.getElementById('jsonBadge');
+  const jsonLabel = document.getElementById('jsonLabel');
+  const statusLabel = document.getElementById('previewStatus');
+
+  function updatePreview() {
+    statusLabel.textContent = 'Rendering...';
+    statusLabel.className = 'text-[9px] font-bold text-blue-500 uppercase';
+
+    let data = {};
+    try {
+      data = JSON.parse(mockDataInput.value);
+      jsonBadge.className = 'w-2 h-2 rounded-full bg-emerald-500';
+      jsonLabel.textContent = 'Valid JSON';
+      jsonLabel.className = 'text-[9px] font-bold text-emerald-500 uppercase tracking-widest';
+    } catch (e) {
+      jsonBadge.className = 'w-2 h-2 rounded-full bg-red-500';
+      jsonLabel.textContent = 'Invalid JSON';
+      jsonLabel.className = 'text-[9px] font-bold text-red-500 uppercase tracking-widest';
+      return;
+    }
+
+    const type = typeSelect.value;
+    const subjectTemplate = Handlebars.compile(subjectInput.value || '');
+    const bodyTemplate = Handlebars.compile(bodyInput.value || '');
+
+    const renderedSubject = subjectTemplate(data);
+    const renderedBody = bodyTemplate(data);
+
+    // Hide all
+    emailContainer.classList.add('hidden');
+    slackContainer.classList.add('hidden');
+    smsContainer.classList.add('hidden');
+
+    if (type === 'email') {
+      emailContainer.classList.remove('hidden');
+      emailSubPreview.textContent = renderedSubject || 'No Subject';
+      
+      const doc = emailIframe.contentDocument;
+      doc.open();
+      doc.write(renderedBody || '<p style="color:#999;font-family:sans-serif;font-size:12px">No content drafted...</p>');
+      doc.close();
+    } else if (type === 'slack') {
+      slackContainer.classList.remove('hidden');
+      slackBodyPreview.textContent = renderedBody || 'Message content...';
+    } else {
+      // SMS or Push
+      smsContainer.classList.remove('hidden');
+      smsSubPreview.textContent = renderedSubject || 'Notification';
+      smsBodyPreview.textContent = renderedBody || 'Message body preview...';
+    }
+
+    statusLabel.textContent = 'Synced';
+    statusLabel.className = 'text-[9px] font-bold text-slate-400 uppercase tracking-widest';
+    lucide.createIcons();
+  }
+
+  // Listeners
+  [subjectInput, bodyInput, mockDataInput, typeSelect].forEach(el => {
+    el.addEventListener('input', updatePreview);
+    el.addEventListener('change', updatePreview);
+  });
+
+  addFieldInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        const value = addFieldInput.value.trim().replace(/,/g, '');
+        if (value) {
+            addField(value);
+            addFieldInput.value = '';
+        }
+    }
+  });
+
+  function addField(value) {
+      if (document.querySelector(`input[name="fields[]"][value="${value}"]`)) return;
+      const tag = document.createElement('div');
+      tag.className = 'field-tag bg-slate-100 px-2 py-1 rounded flex items-center gap-1.5 border border-slate-200';
+      tag.innerHTML = `
+        <span class="text-[10px] font-mono font-bold text-slate-600">${value}</span>
+        <button type="button" onclick="this.parentElement.remove()" class="text-slate-400 hover:text-red-500">
+            <i data-lucide="x" class="w-3 h-3"></i>
+        </button>
+        <input type="hidden" name="fields[]" value="${value}">
+      `;
+      fieldsContainer.insertBefore(tag, addFieldInput);
+      lucide.createIcons();
+  }
+
+  function autoExtractFields() {
+      const text = (subjectInput.value || '') + ' ' + (bodyInput.value || '');
+      const regex = /\{\{([^{}\s]+)\}\}/g;
+      let match;
+      const extracted = new Set();
+      
+      while ((match = regex.exec(text)) !== null) {
+          extracted.add(match[1]);
+      }
+
+      extracted.forEach(field => {
+          addField(field);
+      });
+  }
+
+  // Initial render
+  setTimeout(() => {
+    updatePreview();
+    autoExtractFields();
+  }, 500);
+
+  // Listeners
+  [subjectInput, bodyInput].forEach(el => {
+    el.addEventListener('input', autoExtractFields);
+  });
+
+  function updateIntegrationOptions(shouldPreserveSelection = false) {
+    const selectedType = typeSelect.value;
+    
+    // Clear existing options except default
+    while (integrationSelect.options.length > 1) {
+      integrationSelect.remove(1);
+    }
+    
+    const filteredIntegrations = integrations.filter(integ => integ.type === selectedType);
+    
+    filteredIntegrations.forEach(integ => {
+        const option = document.createElement('option');
+        option.value = integ._id;
+        option.textContent = integ.name;
+        integrationSelect.appendChild(option);
+    });
+
+    if (shouldPreserveSelection && currentIntegrationId) {
+        // If we are editing, try to keep the saved selection
+        const exists = filteredIntegrations.find(i => i._id === currentIntegrationId);
+        if (exists) {
+            integrationSelect.value = currentIntegrationId;
+        } else {
+             autoSelectIntegration(filteredIntegrations);
+        }
+    } else {
+        autoSelectIntegration(filteredIntegrations);
+    }
+  }
+
+  function autoSelectIntegration(filteredIntegrations) {
+      // Default to System Default (global credentials).
+      integrationSelect.value = "";
+  }
+
+  // Listeners
+  typeSelect.addEventListener('change', () => updateIntegrationOptions(false));
+
+  // Initial load
+  updateIntegrationOptions(true); // true = try to preserve existing selection
+
+  document.getElementById('templateForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    toggleLoading(submitBtn, true, 'Saving...');
+
+    const formData = new FormData(e.target);
+    const data = {};
+    const fields = [];
+    
+    for (let [key, value] of formData.entries()) {
+        if (key === 'fields[]') {
+            fields.push(value);
+        } else if (key === 'isPublished') {
+            data.isPublished = true;
+        } else {
+            data[key] = value;
+        }
+    }
+    data.fields = fields;
+    
+    // If isPublished checkbox not checked, formData won't have it, so set false
+    if (!data.isPublished) data.isPublished = false;
+
+    // Handle empty integration as null/undefined
+    if (data.integration === "") delete data.integration; 
+    
+    const id = data.id;
+
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `/tenant-api/templates/${id}` : '/tenant-api/templates';
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (res.ok) {
+        window.location.href = '/tenant/templates';
+      } else {
+        const err = await res.json();
+        showAlert(err.message || 'Validation error');
+        toggleLoading(submitBtn, false);
+      }
+    } catch (e) {
+      showAlert('Network failure');
+      toggleLoading(submitBtn, false);
+    }
+  });
+
+  lucide.createIcons();
+</script>

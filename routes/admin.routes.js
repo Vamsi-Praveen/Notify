@@ -1,19 +1,18 @@
 import { Router } from 'express';
 import mongoose from 'mongoose';
-import { getCache } from '../utils/cache.js'; // We can use this to get the client if needed, or better, export the client
+import * as authController from '../controllers/auth.controller.js';
+import * as ipWhitelistController from '../controllers/ipWhitelist.controller.js';
+import * as queueController from '../controllers/queue.controller.js';
+import Admin from '../models/admin.model.js';
 import ApiKey from '../models/apiKey.model.js';
 import Integration from '../models/integration.model.js';
 import Log from '../models/log.model.js';
+import PushApp from '../models/pushApp.model.js';
 import SystemConfig from '../models/systemConfig.model.js';
 import Template from '../models/template.model.js';
 import Tenant from '../models/tenant.model.js';
 import Workflow from '../models/workflow.model.js';
-import Admin from '../models/admin.model.js';
-import * as queueController from '../controllers/queue.controller.js';
-import * as ipWhitelistController from '../controllers/ipWhitelist.controller.js';
-import * as authController from '../controllers/auth.controller.js';
 
-import { adminAuth } from '../middlewares/adminAuth.middleware.js';
 
 const adminRouter = Router();
 
@@ -249,6 +248,73 @@ adminRouter.get('/tenants', requireAdminAuth, async (req, res) => {
     });
   } catch (e) {
     res.status(500).send('Error loading tenants');
+  }
+});
+
+// Mobile Apps UI Route
+adminRouter.get('/mobile-apps', requireAdminAuth, async (req, res) => {
+  try {
+    const apps = await PushApp.find().populate('tenantId', 'name').sort({ createdAt: -1 });
+
+    res.render('layout', {
+      title: 'Mobile Apps',
+      body: 'admin/mobileApps/index',
+      path: '/admin/mobile-apps',
+      apps,
+    });
+  } catch (e) {
+    res.status(500).send('Error loading mobile apps');
+  }
+});
+
+adminRouter.get('/mobile-apps/:id/edit', requireAdminAuth, async (req, res) => {
+  try {
+    const app = await PushApp.findById(req.params.id).populate('tenantId', 'name');
+    if (!app) return res.status(404).send('App not found');
+
+    res.render('layout', {
+      title: 'Edit Mobile App',
+      body: 'admin/mobileApps/form',
+      path: '/admin/mobile-apps',
+      app,
+    });
+  } catch (e) {
+    res.status(500).send('Error loading app details');
+  }
+});
+
+// Admin-API for Mobile Apps
+adminRouter.put('/admin-api/mobile-apps/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const { name, platform, isActive, serviceAccountJson } = req.body;
+    const app = await PushApp.findById(req.params.id);
+
+    if (!app) return res.status(404).json({ message: 'App not found' });
+
+    app.name = name;
+    app.platform = platform;
+    app.isActive = isActive;
+
+    if (serviceAccountJson) {
+      try {
+        const credentials = JSON.parse(serviceAccountJson);
+        if (!credentials.project_id || !credentials.client_email || !credentials.private_key) {
+          return res.status(400).json({ message: 'Invalid Firebase JSON' });
+        }
+        app.firebaseConfig = {
+          projectId: credentials.project_id,
+          clientEmail: credentials.client_email,
+          privateKey: credentials.private_key,
+        };
+      } catch (e) {
+        return res.status(400).json({ message: 'Invalid JSON format' });
+      }
+    }
+
+    await app.save();
+    res.json({ message: 'App updated successfully' });
+  } catch (e) {
+    res.status(500).json({ message: 'Error updating app' });
   }
 });
 
